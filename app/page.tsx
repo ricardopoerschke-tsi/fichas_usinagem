@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -52,28 +52,43 @@ type ActionCardProps = {
   onClick?: () => void;
 };
 
-const pecasBase: Peca[] = [
-  { desenho: "M0848659", descricao: "Chapa", dimensoes: "47,5 x 30 x 15", largura: 30, prazo: "26/05/26", urgente: false, dataSequenciamento: "25/05/26" },
-  { desenho: "M0602650", descricao: "Suporte", dimensoes: "92 x 84 x 65", largura: 84, prazo: "26/05/26", urgente: false, dataSequenciamento: "25/05/26" },
-  { desenho: "M0760043", descricao: "Mancal", dimensoes: "115 x 45 x 18", largura: 45, prazo: "05/06/26", urgente: false, dataSequenciamento: "25/05/26" },
-  { desenho: "M0760418", descricao: "Mancal", dimensoes: "115 x 45 x 18", largura: 45, prazo: "05/06/26", urgente: false, dataSequenciamento: "25/05/26" },
-  { desenho: "M0802642", descricao: "Suporte motor", dimensoes: "125 x 60,2 x 18", largura: 60.2, prazo: "05/06/26", urgente: false, dataSequenciamento: "25/05/26" },
-  { desenho: "M0802681", descricao: "Suporte motor", dimensoes: "125 x 60,2 x 18", largura: 60.2, prazo: "05/06/26", urgente: false, dataSequenciamento: "25/05/26" },
-  { desenho: "M0769423", descricao: "Base", dimensoes: "160 x 128 x 36", largura: 128, prazo: "05/06/26", urgente: false, dataSequenciamento: "25/05/26" },
-  { desenho: "M0774723", descricao: "Base", dimensoes: "160 x 128 x 36", largura: 128, prazo: "05/06/26", urgente: false, dataSequenciamento: "25/05/26" },
-  { desenho: "M0754852", descricao: "Suporte", dimensoes: "247 x 137,5 x 25", largura: 137.5, prazo: "05/06/26", urgente: false, dataSequenciamento: "25/05/26" },
-  { desenho: "M0999999", descricao: "Placa urgente", dimensoes: "620 x 420 x 30", largura: 420, prazo: "Hoje", urgente: true, dataSequenciamento: "25/05/26" },
-  { desenho: "M0888888", descricao: "Base grande", dimensoes: "500 x 430 x 25", largura: 430, prazo: "Amanhã", urgente: false, dataSequenciamento: "25/05/26" },
-];
+
 
 export default function Sequenciador6064() {
   const [pagina, setPagina] = useState<Pagina>("home");
   const [setupAtual, setSetupAtual] = useState<Setup>("morsa");
   const [setupForcado, setSetupForcado] = useState<SetupForcado>("nenhum");
-  const [sequencia, setSequencia] = useState<Peca[]>(pecasBase);
+  const [sequencia, setSequencia] = useState<Peca[]>([]);
   const [historico, setHistorico] = useState<Peca[]>([]);
   const [selecionadas, setSelecionadas] = useState<string[]>([]);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+
+useEffect(() => {
+  async function carregarDados() {
+    try {
+      const response = await fetch("/api/fichas/6064");
+      const data = await response.json();
+
+      const convertido: Peca[] = data.map((item: any) => ({
+        desenho: item["Desenho"] || "",
+        descricao: item["Descrição"] || "",
+        dimensoes: item["Dimensões"] || "",
+        largura: extrairLargura(item["Dimensões"] || ""),
+        prazo: item["Prazo"] || "",
+        urgente:
+          (item["Observações"] || "")
+            .toLowerCase()
+            .includes("urgente"),
+      }));
+
+      setSequencia(convertido);
+    } catch (error) {
+      console.error("Erro ao carregar planilha:", error);
+    }
+  }
+
+  carregarDados();
+}, []);
 
   const maquina = {
     numero: "6064",
@@ -87,7 +102,7 @@ export default function Sequenciador6064() {
     const getSetup = (peca: Peca): Setup => (peca.largura <= 400 ? "morsa" : "vacuo");
     const setupPrioritario: Setup = setupForcado === "nenhum" ? setupAtual : setupForcado;
 
-    return [...pecasBase].sort((a, b) => {
+    return [...sequencia].sort((a, b) => {
       const setupA = getSetup(a);
       const setupB = getSetup(b);
 
@@ -103,7 +118,7 @@ export default function Sequenciador6064() {
 
       return a.largura - b.largura;
     });
-  }, [setupAtual, setupForcado]);
+  }, [setupAtual, setupForcado, sequencia]);
 
   function criarSequencia() {
     const hoje = formatarDataHoje();
@@ -258,7 +273,24 @@ export default function Sequenciador6064() {
                   <div
                     draggable={modoEdicao}
                     onDragStart={modoEdicao ? () => setDragIndex(index) : undefined}
-                    onDragOver={modoEdicao ? (event) => event.preventDefault() : undefined}
+                    onDragOver={
+  modoEdicao
+    ? (event) => {
+        event.preventDefault();
+
+        const limiteInferior = window.innerHeight - 120;
+        const limiteSuperior = 120;
+
+        if (event.clientY > limiteInferior) {
+          window.scrollBy(0, 12);
+        }
+
+        if (event.clientY < limiteSuperior) {
+          window.scrollBy(0, -12);
+        }
+      }
+    : undefined
+}
                     onDrop={modoEdicao ? () => moverItem(dragIndex, index) : undefined}
                     onDragEnd={modoEdicao ? () => setDragIndex(null) : undefined}
                     className={`rounded-2xl p-4 shadow-sm transition ${selecionada ? "bg-green-50 ring-2 ring-green-400" : "bg-white"} ${modoEdicao ? "cursor-move hover:shadow-md" : "cursor-default"}`}
@@ -478,6 +510,17 @@ function converterData(data: string) {
 
   const [dia, mes, ano] = data.split("/").map(Number);
   return new Date(2000 + ano, mes - 1, dia).getTime();
+}
+
+function extrairLargura(dimensoes: string): number {
+  const partes = dimensoes
+    .replace(",", ".")
+    .split("x")
+    .map((p) => parseFloat(p.trim()));
+
+  if (partes.length < 2) return 0;
+
+  return partes[1] || 0;
 }
 
 function formatarDataHoje() {
