@@ -148,6 +148,33 @@ useEffect(() => {
     );
   }
 
+async function salvarSequencia() {
+  try {
+    const payload = sequencia.map((peca, index) => ({
+      sequencia: index + 1,
+      desenho: peca.desenho,
+    }));
+
+    const response = await fetch("/api/fichas/salvar", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json();
+
+    console.log(result);
+
+    alert("Sequência salva com sucesso!");
+  } catch (error) {
+    console.error(error);
+
+    alert("Erro ao salvar sequência");
+  }
+}
+
   function marcarProduzidas() {
     if (selecionadas.length === 0) return;
 
@@ -242,17 +269,32 @@ useEffect(() => {
                       : "Modo de produção. Selecione os itens finalizados para enviar ao histórico."}
                   </p>
                 </div>
-                <div className="flex flex-col gap-3 md:items-end">
-                  <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-                    <p className="text-sm text-slate-500">Setup inicial</p>
-                    <p className="text-xl font-semibold">{setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}</p>
-                  </div>
-                  {!modoEdicao && (
-                    <Button onClick={marcarProduzidas} disabled={selecionadas.length === 0} className="gap-2">
-                      <CheckCircle2 size={18} /> Marcar produzidas ({selecionadas.length})
-                    </Button>
-                  )}
-                </div>
+               <div className="flex flex-col gap-3 md:items-end">
+  <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
+    <p className="text-sm text-slate-500">Setup inicial</p>
+    <p className="text-xl font-semibold">
+      {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}
+    </p>
+  </div>
+
+  <Button
+    onClick={salvarSequencia}
+    className="gap-2"
+    variant="outline"
+  >
+    Salvar sequência
+  </Button>
+
+  {!modoEdicao && (
+    <Button
+      onClick={marcarProduzidas}
+      disabled={selecionadas.length === 0}
+      className="gap-2"
+    >
+      <CheckCircle2 size={18} /> Marcar produzidas ({selecionadas.length})
+    </Button>
+  )}
+</div>
               </div>
             </CardContent>
           </Card>
