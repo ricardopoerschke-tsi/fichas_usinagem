@@ -175,23 +175,37 @@ async function salvarSequencia() {
   }
 }
 
-  function marcarProduzidas() {
-    if (selecionadas.length === 0) return;
+ async function marcarProduzidas() {
+  if (selecionadas.length === 0) return;
 
-    const hoje = formatarDataHoje();
-    const produzidas: Peca[] = sequencia
-      .filter((peca) => selecionadas.includes(peca.desenho))
-      .map((peca) => ({
-        ...peca,
-        dataProduzido: hoje,
-        status: "Produzido",
-      }));
+  try {
+    const response = await fetch("/api/fichas/produzidas", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(selecionadas),
+    });
 
-    setHistorico((atual) => [...produzidas, ...atual]);
-    setSequencia((atual) => atual.filter((peca) => !selecionadas.includes(peca.desenho)));
+    const result = await response.json();
+
+    if (!result.success) {
+      alert("Erro ao marcar produzidas");
+      return;
+    }
+
+    setSequencia((atual) =>
+      atual.filter((peca) => !selecionadas.includes(peca.desenho))
+    );
+
     setSelecionadas([]);
-  }
 
+    alert(`Peças produzidas movidas para o histórico: ${result.movidas}`);
+  } catch (error) {
+    console.error(error);
+    alert("Erro ao marcar peças como produzidas");
+  }
+}
   function getSetupLabel(peca: Peca) {
     return peca.largura <= 400 ? "Morsa" : "Vácuo";
   }
