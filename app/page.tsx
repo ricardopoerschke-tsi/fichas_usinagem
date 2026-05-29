@@ -57,7 +57,6 @@ type ActionCardProps = {
 export default function Sequenciador6064() {
   const [pagina, setPagina] = useState<Pagina>("home");
   const [setupAtual, setSetupAtual] = useState<Setup>("morsa");
-  const [setupForcado, setSetupForcado] = useState<SetupForcado>("nenhum");
   const [sequencia, setSequencia] = useState<Peca[]>([]);
   const [historico, setHistorico] = useState<Peca[]>([]);
   const [selecionadas, setSelecionadas] = useState<string[]>([]);
@@ -75,10 +74,7 @@ useEffect(() => {
         dimensoes: item["Dimensões"] || "",
         largura: extrairLargura(item["Dimensões"] || ""),
         prazo: item["Prazo"] || "",
-        urgente:
-          (item["Observações"] || "")
-            .toLowerCase()
-            .includes("urgente"),
+        urgente: (item["Observações"] || "").toLowerCase().includes("urgente"),
       }));
 
       setSequencia(convertido);
@@ -87,7 +83,29 @@ useEffect(() => {
     }
   }
 
+  async function carregarHistorico() {
+    try {
+      const response = await fetch("/api/fichas/historico/6064");
+      const data = await response.json();
+
+      const convertido: Peca[] = data.map((item: any) => ({
+        desenho: item["Desenho"] || "",
+        descricao: item["Descrição"] || "",
+        dimensoes: item["Dimensões"] || "",
+        largura: extrairLargura(item["Dimensões"] || ""),
+        prazo: item["Prazo"] || "",
+        urgente: false,
+        dataProduzido: item["Data Produção"] || "",
+      }));
+
+      setHistorico(convertido);
+    } catch (error) {
+      console.error("Erro ao carregar histórico:", error);
+    }
+  }
+
   carregarDados();
+  carregarHistorico();
 }, []);
 
   const maquina = {
@@ -100,8 +118,7 @@ useEffect(() => {
 
   const sequenciaSugerida = useMemo(() => {
     const getSetup = (peca: Peca): Setup => (peca.largura <= 400 ? "morsa" : "vacuo");
-    const setupPrioritario: Setup = setupForcado === "nenhum" ? setupAtual : setupForcado;
-
+     const setupPrioritario: Setup = setupAtual;
     return [...sequencia].sort((a, b) => {
       const setupA = getSetup(a);
       const setupB = getSetup(b);
@@ -118,7 +135,7 @@ useEffect(() => {
 
       return a.largura - b.largura;
     });
-  }, [setupAtual, setupForcado, sequencia]);
+  }, [setupAtual, sequencia]);
 
   function criarSequencia() {
     const hoje = formatarDataHoje();
@@ -283,12 +300,36 @@ async function salvarSequencia() {
                       : "Modo de produção. Selecione os itens finalizados para enviar ao histórico."}
                   </p>
                 </div>
-               <div className="flex flex-col gap-3 md:items-end">
-  <div className="rounded-2xl bg-white px-4 py-3 shadow-sm">
-    <p className="text-sm text-slate-500">Setup inicial</p>
-    <p className="text-xl font-semibold">
-      {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}
-    </p>
+    <div className="rounded-2xl bg-white px-5 py-4 shadow-sm border">
+  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    
+    <div>
+      <p className="text-sm text-slate-500">
+        Status operacional da máquina
+      </p>
+
+      <p className="text-2xl font-bold mt-1">
+        {setupAtual === "morsa"
+          ? "Setup atual: Morsa"
+          : "Setup atual: Mesa de vácuo"}
+      </p>
+    </div>
+
+    <div className="flex gap-2">
+      <Button
+        variant={setupAtual === "morsa" ? "default" : "outline"}
+        onClick={() => setSetupAtual("morsa")}
+      >
+        Morsa
+      </Button>
+
+      <Button
+        variant={setupAtual === "vacuo" ? "default" : "outline"}
+        onClick={() => setSetupAtual("vacuo")}
+      >
+        Mesa de vácuo
+      </Button>
+    </div>
   </div>
 
   <Button
@@ -442,23 +483,6 @@ async function salvarSequencia() {
                   </div>
                 </div>
 
-                <div className="mt-6 rounded-2xl bg-white p-4 shadow-sm">
-                  <p className="text-sm font-semibold text-slate-700">Forçar prioridade de setup</p>
-                  <p className="mt-1 text-sm text-slate-500">
-                    Use quando uma peça urgente exige trocar o setup antes da sequência normal.
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-3">
-                    <Button variant={setupForcado === "nenhum" ? "default" : "outline"} onClick={() => setSetupForcado("nenhum")}>
-                      Não forçar
-                    </Button>
-                    <Button variant={setupForcado === "morsa" ? "default" : "outline"} onClick={() => setSetupForcado("morsa")}>
-                      Forçar Morsa
-                    </Button>
-                    <Button variant={setupForcado === "vacuo" ? "default" : "outline"} onClick={() => setSetupForcado("vacuo")}>
-                      Forçar Mesa de vácuo
-                    </Button>
-                  </div>
-                </div>
               </CardContent>
             </Card>
           </motion.div>
