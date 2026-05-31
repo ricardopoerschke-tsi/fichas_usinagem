@@ -29,6 +29,8 @@ type Peca = {
   dataSequenciamento?: string;
   dataProduzido?: string;
   status?: string;
+  ordem?: string;
+  observacoes?: string;
 };
 
 type CardProps = {
@@ -74,6 +76,8 @@ useEffect(() => {
         dimensoes: item["Dimensões"] || "",
         largura: extrairLargura(item["Dimensões"] || ""),
         prazo: item["Prazo"] || "",
+        ordem: item["Ordem"] || "",
+        observacoes: item["Observações"] || "",
         urgente: (item["Observações"] || "").toLowerCase().includes("urgente"),
       }));
 
@@ -116,26 +120,53 @@ useEffect(() => {
     fila: sequencia.length,
   };
 
-  const sequenciaSugerida = useMemo(() => {
-    const getSetup = (peca: Peca): Setup => (peca.largura <= 400 ? "morsa" : "vacuo");
-     const setupPrioritario: Setup = setupAtual;
-    return [...sequencia].sort((a, b) => {
-      const setupA = getSetup(a);
-      const setupB = getSetup(b);
+ const sequenciaSugerida = useMemo(() => {
+  const getSetup = (peca: Peca): Setup =>
+    peca.largura <= 400 ? "morsa" : "vacuo";
 
-      if (a.urgente && !b.urgente) return -1;
-      if (!a.urgente && b.urgente) return 1;
+  const getConjunto = (peca: Peca): string => {
+    const obs = peca.observacoes || "";
+    const ordem = peca.ordem || "";
+    return ordem !== "-" && ordem !== "Sem OF" ? ordem : obs;
+  };
 
-      if (setupA === setupPrioritario && setupB !== setupPrioritario) return -1;
-      if (setupA !== setupPrioritario && setupB === setupPrioritario) return 1;
+  return [...sequencia].sort((a, b) => {
+    const prazoA = converterData(a.prazo);
+    const prazoB = converterData(b.prazo);
 
-      const prazoA = converterData(a.prazo);
-      const prazoB = converterData(b.prazo);
-      if (prazoA !== prazoB) return prazoA - prazoB;
+    const setupA = getSetup(a);
+    const setupB = getSetup(b);
 
+    const diferencaDias = Math.abs(prazoA - prazoB) / (1000 * 60 * 60 * 24);
+
+    if (a.urgente && !b.urgente) return -1;
+    if (!a.urgente && b.urgente) return 1;
+
+    if (prazoA !== prazoB && diferencaDias > 2) {
+      return prazoA - prazoB;
+    }
+
+    if (setupA === setupAtual && setupB !== setupAtual) return -1;
+    if (setupA !== setupAtual && setupB === setupAtual) return 1;
+
+    const conjuntoA = getConjunto(a);
+    const conjuntoB = getConjunto(b);
+
+    if (conjuntoA !== conjuntoB) {
+      return conjuntoA.localeCompare(conjuntoB);
+    }
+
+    if (prazoA !== prazoB) {
+      return prazoA - prazoB;
+    }
+
+    if (setupAtual === "morsa") {
       return a.largura - b.largura;
-    });
-  }, [setupAtual, sequencia]);
+    }
+
+    return b.largura - a.largura;
+  });
+}, [setupAtual, sequencia]);
 
   function criarSequencia() {
     const hoje = formatarDataHoje();
@@ -145,7 +176,7 @@ useEffect(() => {
     }));
 
     setSequencia(novaSequencia);
-    setPagina("verSequencia");
+    setPagina("editarSequencia");
   }
 
   function moverItem(origem: number | null, destino: number) {
@@ -304,34 +335,37 @@ async function salvarSequencia() {
   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
     
     <div>
-      <p className="text-sm text-slate-500">
-        Status operacional da máquina
-      </p>
+  <p className="text-sm text-slate-500">
+    {modoEdicao
+      ? "Status operacional da máquina"
+      : "Setup considerado na sequência"}
+  </p>
 
-      <p className="text-2xl font-bold mt-1">
-        {setupAtual === "morsa"
-          ? "Setup atual: Morsa"
-          : "Setup atual: Mesa de vácuo"}
-      </p>
-    </div>
+  <p className="text-2xl font-bold mt-1">
+    {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}
+  </p>
+</div>
 
-    <div className="flex gap-2">
-      <Button
-        variant={setupAtual === "morsa" ? "default" : "outline"}
-        onClick={() => setSetupAtual("morsa")}
-      >
-        Morsa
-      </Button>
+{modoEdicao && (
+  <div className="flex gap-2">
+    <Button
+      variant={setupAtual === "morsa" ? "default" : "outline"}
+      onClick={() => setSetupAtual("morsa")}
+    >
+      Morsa
+    </Button>
 
-      <Button
-        variant={setupAtual === "vacuo" ? "default" : "outline"}
-        onClick={() => setSetupAtual("vacuo")}
-      >
-        Mesa de vácuo
-      </Button>
-    </div>
+    <Button
+      variant={setupAtual === "vacuo" ? "default" : "outline"}
+      onClick={() => setSetupAtual("vacuo")}
+    >
+      Mesa de vácuo
+    </Button>
   </div>
+)}
+</div>
 
+{modoEdicao && (
   <Button
     onClick={salvarSequencia}
     className="gap-2"
@@ -339,16 +373,17 @@ async function salvarSequencia() {
   >
     Salvar sequência
   </Button>
+)}
 
-  {!modoEdicao && (
-    <Button
-      onClick={marcarProduzidas}
-      disabled={selecionadas.length === 0}
-      className="gap-2"
-    >
-      <CheckCircle2 size={18} /> Marcar produzidas ({selecionadas.length})
-    </Button>
-  )}
+{!modoEdicao && (
+  <Button
+    onClick={marcarProduzidas}
+    disabled={selecionadas.length === 0}
+    className="gap-2"
+  >
+    <CheckCircle2 size={18} /> Marcar produzidas ({selecionadas.length})
+  </Button>
+)}
 </div>
               </div>
             </CardContent>

@@ -458,3 +458,228 @@ git push
 Ricardo Poerschke
 
 Projeto em evolução contínua baseado em uso real no chão de fábrica.
+
+
+
+Ajuste Feito no dia 31/05/26
+# Regra de Sequenciamento da Máquina 6064
+
+## Conceito Geral
+
+O sequenciamento da máquina 6064 não é baseado apenas em setup ou prazo.
+
+A lógica foi construída a partir da forma como o planejamento é realizado na prática, buscando equilibrar:
+
+* Cumprimento de prazos.
+* Redução de setups.
+* Agrupamento de peças relacionadas.
+* Aproveitamento da preparação da máquina.
+* Continuidade operacional.
+
+---
+
+## Hierarquia de Decisão
+
+### 1. Prazo (Regra Principal)
+
+O prazo é o principal critério de decisão.
+
+As peças devem ser agrupadas e organizadas respeitando primeiramente a data de entrega.
+
+Objetivo:
+
+* Evitar atrasos.
+* Priorizar necessidades reais da produção.
+* Garantir cumprimento dos compromissos de entrega.
+
+---
+
+### 2. Conjunto / Família de Peças
+
+Após considerar o prazo, devem ser identificadas peças pertencentes ao mesmo conjunto.
+
+Exemplos de identificação:
+
+* Mesma OF.
+* Mesmo projeto.
+* Mesma ferramenta.
+* Mesma referência.
+* Mesmo conjunto mecânico.
+
+Sempre que possível, peças do mesmo conjunto devem ser produzidas em sequência.
+
+Objetivo:
+
+* Aproveitar preparação.
+* Reduzir movimentação.
+* Facilitar conferência.
+* Reduzir retrabalho.
+
+---
+
+### 3. Largura da Peça
+
+Dentro de um conjunto, a ordem das peças deve considerar a largura.
+
+A lógica não é simplesmente ordenar por maior ou menor dimensão.
+
+A sequência deve buscar continuidade em relação à peça anterior produzida.
+
+Exemplo:
+
+Peça atual:
+
+```text
+200 mm
+```
+
+Próximo conjunto:
+
+```text
+300 mm
+150 mm
+50 mm
+```
+
+Sequência recomendada:
+
+```text
+300 mm
+150 mm
+50 mm
+```
+
+Objetivo:
+
+* Reduzir ajustes.
+* Facilitar preparação.
+* Melhorar fluidez da produção.
+
+---
+
+### 4. Setup
+
+O setup é importante, mas não possui prioridade absoluta.
+
+O sistema deve buscar agrupar peças compatíveis com o setup atual da máquina.
+
+Exemplos:
+
+* Morsa
+* Mesa de vácuo
+
+Objetivo:
+
+* Reduzir trocas de setup.
+* Aumentar produtividade.
+* Melhorar aproveitamento da máquina.
+
+---
+
+## Regra de Tolerância de Prazo para Priorização de Setup
+
+O setup pode ser priorizado somente quando não gerar atraso significativo.
+
+### Exemplo 1
+
+Peças:
+
+```text
+Peça A
+Prazo: 08/10
+Setup: Morsa
+
+Peça B
+Prazo: 08/10
+Setup: Morsa
+
+Peça C
+Prazo: 07/10
+Setup: Mesa de vácuo
+```
+
+Decisão:
+
+```text
+A
+B
+C
+```
+
+Motivo:
+
+A diferença de prazo é pequena e não justifica uma troca imediata de setup.
+
+---
+
+### Exemplo 2
+
+Peças:
+
+```text
+Peça A
+Prazo: 08/10
+Setup: Morsa
+
+Peça B
+Prazo: 08/10
+Setup: Morsa
+
+Peça C
+Prazo: 05/10
+Setup: Mesa de vácuo
+```
+
+Decisão:
+
+```text
+C
+A
+B
+```
+
+Motivo:
+
+A diferença de prazo é superior ao limite aceitável.
+
+Neste caso o prazo deve prevalecer sobre o setup.
+
+---
+
+## Regra dos Dois Dias
+
+Como regra operacional:
+
+```text
+Priorizar setup é permitido
+desde que isso não gere atraso superior a dois dias
+em relação ao prazo de outra peça.
+```
+
+Quando a diferença de prazo ultrapassar dois dias:
+
+```text
+Prazo tem prioridade sobre setup.
+```
+
+---
+
+## Resumo da Lógica Atual
+
+Hierarquia utilizada pelo planejador:
+
+1. Prazo.
+2. Conjunto/Família.
+3. Largura.
+4. Setup.
+
+Regra especial:
+
+* Setup pode ser priorizado.
+* Prazo sempre prevalece quando a diferença for superior a dois dias.
+
+---
+
+## Observação Importante
+
+Esta regra representa a lógica real utilizada na operação da máquina 6064 e deve servir como referência para futuras melhorias do algoritmo de sequenciamento.
