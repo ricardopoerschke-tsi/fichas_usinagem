@@ -462,224 +462,405 @@ Projeto em evolução contínua baseado em uso real no chão de fábrica.
 
 
 Ajuste Feito no dia 31/05/26
-# Regra de Sequenciamento da Máquina 6064
 
-## Conceito Geral
+# Sequenciador de Produção
 
-O sequenciamento da máquina 6064 não é baseado apenas em setup ou prazo.
+## Objetivo
 
-A lógica foi construída a partir da forma como o planejamento é realizado na prática, buscando equilibrar:
+Sistema web para sequenciamento de produção de máquinas CNC, desenvolvido em Next.js.
 
-* Cumprimento de prazos.
-* Redução de setups.
-* Agrupamento de peças relacionadas.
-* Aproveitamento da preparação da máquina.
-* Continuidade operacional.
+O sistema foi criado inicialmente para a máquina 6064 (Deckel), com foco em:
 
----
-
-## Hierarquia de Decisão
-
-### 1. Prazo (Regra Principal)
-
-O prazo é o principal critério de decisão.
-
-As peças devem ser agrupadas e organizadas respeitando primeiramente a data de entrega.
-
-Objetivo:
-
-* Evitar atrasos.
-* Priorizar necessidades reais da produção.
-* Garantir cumprimento dos compromissos de entrega.
+* Redução de trocas de setup
+* Priorização por prazo
+* Tratamento de peças urgentes
+* Controle visual da fila
+* Histórico de produção
+* Persistência da sequência
 
 ---
 
-### 2. Conjunto / Família de Peças
+## Máquina Atual
 
-Após considerar o prazo, devem ser identificadas peças pertencentes ao mesmo conjunto.
+### 6064 - Deckel
 
-Exemplos de identificação:
+Tipo:
 
-* Mesma OF.
-* Mesmo projeto.
-* Mesma ferramenta.
-* Mesma referência.
-* Mesmo conjunto mecânico.
+* Fresadora CNC
 
-Sempre que possível, peças do mesmo conjunto devem ser produzidas em sequência.
+Material predominante:
 
-Objetivo:
+* Alumínio
 
-* Aproveitar preparação.
-* Reduzir movimentação.
-* Facilitar conferência.
-* Reduzir retrabalho.
-
----
-
-### 3. Largura da Peça
-
-Dentro de um conjunto, a ordem das peças deve considerar a largura.
-
-A lógica não é simplesmente ordenar por maior ou menor dimensão.
-
-A sequência deve buscar continuidade em relação à peça anterior produzida.
-
-Exemplo:
-
-Peça atual:
-
-```text
-200 mm
-```
-
-Próximo conjunto:
-
-```text
-300 mm
-150 mm
-50 mm
-```
-
-Sequência recomendada:
-
-```text
-300 mm
-150 mm
-50 mm
-```
-
-Objetivo:
-
-* Reduzir ajustes.
-* Facilitar preparação.
-* Melhorar fluidez da produção.
-
----
-
-### 4. Setup
-
-O setup é importante, mas não possui prioridade absoluta.
-
-O sistema deve buscar agrupar peças compatíveis com o setup atual da máquina.
-
-Exemplos:
+Setup disponíveis:
 
 * Morsa
 * Mesa de vácuo
 
+---
+
+## Fluxo Operacional Atual
+
+### Criar Sequência
+
+1. Ler aba 6064 da planilha.
+2. Gerar sequência automática.
+3. Abrir tela de edição.
+4. Validar resultado.
+5. Salvar sequência.
+
+---
+
+### Editar Sequência
+
+Permite:
+
+* Alterar ordem das peças
+* Ajustar urgências
+* Mover itens por drag and drop
+* Alterar setup considerado
+
+---
+
+### Ver Sequência
+
+Permite:
+
+* Visualizar fila ativa
+* Consultar setup considerado
+* Selecionar peças produzidas
+* Marcar produzidas
+
+Não permite:
+
+* Editar sequência
+* Alterar setup
+* Salvar sequência
+
+---
+
+### Histórico
+
+Permite:
+
+* Consultar peças produzidas
+* Consultar data de produção
+* Consultar histórico real da máquina
+
+---
+
+## Estrutura da Planilha
+
+### Aba 6064
+
+Fila ativa da máquina.
+
+### Aba Historico_6064
+
+Peças produzidas.
+
+Campos armazenados:
+
+* Desenho
+* Descrição
+* Quantidade
+* Material
+* Dimensões
+* Ordem
+* Prazo
+* Observações
+* Data de produção
+
+---
+
+## Arquitetura
+
+### Frontend
+
+Arquivo principal:
+
+```text
+app/page.tsx
+```
+
+---
+
+### APIs
+
+#### Leitura da fila
+
+```text
+app/api/fichas/6064/route.ts
+```
+
+---
+
+#### Salvar sequência
+
+```text
+app/api/fichas/salvar/route.ts
+```
+
+---
+
+#### Produzidas
+
+```text
+app/api/fichas/produzidas/route.ts
+```
+
+---
+
+#### Histórico
+
+```text
+app/api/fichas/historico/6064/route.ts
+```
+
+---
+
+## Regra de Sequenciamento da 6064
+
+### Hierarquia Principal
+
+1. Prazo
+2. Conjunto/Família
+3. Largura
+4. Setup
+
+---
+
+### Prazo
+
+Principal critério de decisão.
+
 Objetivo:
 
-* Reduzir trocas de setup.
-* Aumentar produtividade.
-* Melhorar aproveitamento da máquina.
+* Evitar atrasos
+* Garantir cumprimento de entrega
 
 ---
 
-## Regra de Tolerância de Prazo para Priorização de Setup
+### Conjunto/Família
 
-O setup pode ser priorizado somente quando não gerar atraso significativo.
+Sempre que possível, peças relacionadas devem ser produzidas em sequência.
 
-### Exemplo 1
+Exemplos:
 
-Peças:
+* Mesma OF
+* Mesmo projeto
+* Mesma ferramenta
+* Mesma referência
 
-```text
-Peça A
-Prazo: 08/10
-Setup: Morsa
+Objetivos:
 
-Peça B
-Prazo: 08/10
-Setup: Morsa
+* Aproveitar preparação
+* Reduzir movimentação
+* Facilitar conferência
 
-Peça C
-Prazo: 07/10
-Setup: Mesa de vácuo
-```
+---
+
+### Largura
+
+Dentro de um conjunto, considerar a largura das peças.
+
+Lógica operacional:
+
+* Setup Morsa → menor para maior
+* Setup Mesa de vácuo → maior para menor
+
+Objetivo:
+
+* Facilitar preparação
+* Reduzir ajustes
+
+---
+
+### Setup
+
+Setup é considerado, porém não possui prioridade absoluta.
+
+Objetivo:
+
+* Reduzir trocas
+* Melhorar produtividade
+
+---
+
+### Regra dos Dois Dias
+
+O setup pode ser priorizado desde que isso não gere atraso superior a dois dias.
+
+Exemplo:
+
+Peça A:
+
+* Prazo 08/10
+* Setup Morsa
+
+Peça B:
+
+* Prazo 07/10
+* Setup Mesa de vácuo
 
 Decisão:
 
-```text
-A
-B
-C
-```
-
-Motivo:
-
-A diferença de prazo é pequena e não justifica uma troca imediata de setup.
+Manter setup atual.
 
 ---
 
-### Exemplo 2
+Exemplo:
 
-Peças:
+Peça A:
 
-```text
-Peça A
-Prazo: 08/10
-Setup: Morsa
+* Prazo 08/10
+* Setup Morsa
 
-Peça B
-Prazo: 08/10
-Setup: Morsa
+Peça B:
 
-Peça C
-Prazo: 05/10
-Setup: Mesa de vácuo
-```
+* Prazo 05/10
+* Setup Mesa de vácuo
 
 Decisão:
 
-```text
-C
-A
-B
-```
+Priorizar prazo.
+
+---
+
+## Funcionalidades Implementadas
+
+### Sequenciamento
+
+* Sequenciamento automático
+* Agrupamento por conjunto
+* Consideração de setup
+* Consideração de prazo
+
+### Edição
+
+* Drag and drop
+* Auto-scroll
+
+### Integração
+
+* Google Sheets
+* Apps Script
+
+### Persistência
+
+* Salvar sequência
+* Histórico permanente
+
+### Controle
+
+* Produzidas
+* Histórico
+* Contadores
+
+---
+
+## Funcionalidades Removidas
+
+### Forçar prioridade de setup
+
+Status:
+
+Removida
 
 Motivo:
 
-A diferença de prazo é superior ao limite aceitável.
+Urgências são melhor tratadas através da edição manual da sequência.
 
-Neste caso o prazo deve prevalecer sobre o setup.
-
----
-
-## Regra dos Dois Dias
-
-Como regra operacional:
-
-```text
-Priorizar setup é permitido
-desde que isso não gere atraso superior a dois dias
-em relação ao prazo de outra peça.
-```
-
-Quando a diferença de prazo ultrapassar dois dias:
-
-```text
-Prazo tem prioridade sobre setup.
-```
+A funcionalidade aumentava a complexidade sem benefício operacional relevante.
 
 ---
 
-## Resumo da Lógica Atual
+## Problemas Encontrados em Uso Real
 
-Hierarquia utilizada pelo planejador:
+### Botão salvar sequência em Ver sequência
 
-1. Prazo.
-2. Conjunto/Família.
-3. Largura.
-4. Setup.
+Status:
 
-Regra especial:
-
-* Setup pode ser priorizado.
-* Prazo sempre prevalece quando a diferença for superior a dois dias.
+Corrigido
 
 ---
 
-## Observação Importante
+### Auto-scroll ausente
 
-Esta regra representa a lógica real utilizada na operação da máquina 6064 e deve servir como referência para futuras melhorias do algoritmo de sequenciamento.
+Status:
+
+Corrigido
+
+---
+
+### Histórico apenas local
+
+Status:
+
+Corrigido
+
+Solução:
+
+Histórico persistido na planilha.
+
+---
+
+### Forçar prioridade de setup
+
+Status:
+
+Removido
+
+---
+
+## Próximas Etapas
+
+### Fase 1 - Consolidação da 6064
+
+* Continuar validação operacional
+* Refinamentos de interface
+* Refinamentos de usabilidade
+* Hospedagem
+
+---
+
+### Fase 2 - Expansão
+
+Possíveis máquinas:
+
+* Torno CNC
+* Outras fresadoras CNC
+
+Cada máquina possuirá regras próprias de decisão.
+
+---
+
+## Ideias Futuras
+
+### Capacidade x Demanda
+
+Considerar:
+
+* Tempo padrão
+* Tempo de setup
+* Capacidade diária
+
+Objetivos:
+
+* Medir ocupação
+* Identificar gargalos
+* Apoiar planejamento
+
+---
+
+### APS Simplificado
+
+Possível evolução futura para planejamento integrado entre máquinas.
+
+---
+
+## Histórico do Projeto
+
+Projeto desenvolvido e refinado através de uso real em produção.
+
+Todas as regras atuais foram validadas operacionalmente antes de serem implementadas.

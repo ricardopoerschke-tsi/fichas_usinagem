@@ -137,3 +137,96 @@ Cada máquina possuirá regras próprias de decisão e sequenciamento.
 Responsável pelo projeto: Ricardo Poerschke
 
 Projeto em desenvolvimento contínuo.
+
+
+
+Após ajuste de regra do dia 31/05/2026
+
+# Sequenciador de Produção
+
+Sistema web para sequenciamento de produção de máquinas CNC desenvolvido em Next.js.
+
+O projeto foi criado inicialmente para a máquina 6064 (Deckel) com foco em:
+
+* Redução de trocas de setup
+* Priorização por prazo
+* Agrupamento de peças por conjunto
+* Controle visual da fila
+* Histórico de produção
+* Persistência da sequência
+* Integração com Google Sheets
+
+---
+
+## Funcionalidades
+
+### Sequenciamento
+
+* Geração automática da sequência
+* Consideração de prazo
+* Agrupamento por conjunto/família
+* Consideração de setup
+* Tratamento de urgências
+
+### Edição
+
+* Drag and drop
+* Auto-scroll durante movimentação
+* Ajuste manual da sequência
+
+### Produção
+
+* Marcação de peças produzidas
+* Histórico persistente
+* Controle de fila ativa
+
+---
+
+## Estrutura
+
+### Máquina atual
+
+* 6064 - Deckel
+
+### Próximas expansões
+
+* Torno CNC
+* Outras máquinas de usinagem
+
+---
+
+## Tecnologias
+
+* Next.js
+* React
+* TypeScript
+* Tailwind CSS
+* Google Sheets
+* Google Apps Script
+* GitHub
+
+---
+
+## Fluxo Operacional
+
+1. Alimentar a planilha de fichas.
+2. Criar sequência.
+3. Ajustar sequência se necessário.
+4. Salvar sequência.
+5. Executar produção.
+6. Marcar produzidas.
+7. Consultar histórico.
+
+---
+
+## Documentação Completa
+
+Consultar:
+
+```text
+docs/projeto.md
+```
+
+---
+
+Projeto em desenvolvimento contínuo com validação operacional em ambiente real de produção.
