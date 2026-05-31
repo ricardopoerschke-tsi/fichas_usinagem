@@ -64,53 +64,53 @@ export default function Sequenciador6064() {
   const [selecionadas, setSelecionadas] = useState<string[]>([]);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
 
-useEffect(() => {
-  async function carregarDados() {
-    try {
-      const response = await fetch("/api/fichas/6064");
-      const data = await response.json();
+  useEffect(() => {
+    async function carregarDados() {
+      try {
+        const response = await fetch("/api/fichas/6064");
+        const data = await response.json();
 
-      const convertido: Peca[] = data.map((item: any) => ({
-        desenho: item["Desenho"] || "",
-        descricao: item["Descrição"] || "",
-        dimensoes: item["Dimensões"] || "",
-        largura: extrairLargura(item["Dimensões"] || ""),
-        prazo: item["Prazo"] || "",
-        ordem: item["Ordem"] || "",
-        observacoes: item["Observações"] || "",
-        urgente: (item["Observações"] || "").toLowerCase().includes("urgente"),
-      }));
+        const convertido: Peca[] = data.map((item: any) => ({
+          desenho: item["Desenho"] || "",
+          descricao: item["Descrição"] || "",
+          dimensoes: item["Dimensões"] || "",
+          largura: extrairLargura(item["Dimensões"] || ""),
+          prazo: item["Prazo"] || "",
+          ordem: item["Ordem"] || "",
+          observacoes: item["Observações"] || "",
+          urgente: (item["Observações"] || "").toLowerCase().includes("urgente"),
+        }));
 
-      setSequencia(convertido);
-    } catch (error) {
-      console.error("Erro ao carregar planilha:", error);
+        setSequencia(convertido);
+      } catch (error) {
+        console.error("Erro ao carregar planilha:", error);
+      }
     }
-  }
 
-  async function carregarHistorico() {
-    try {
-      const response = await fetch("/api/fichas/historico/6064");
-      const data = await response.json();
+    async function carregarHistorico() {
+      try {
+        const response = await fetch("/api/fichas/historico/6064");
+        const data = await response.json();
 
-      const convertido: Peca[] = data.map((item: any) => ({
-        desenho: item["Desenho"] || "",
-        descricao: item["Descrição"] || "",
-        dimensoes: item["Dimensões"] || "",
-        largura: extrairLargura(item["Dimensões"] || ""),
-        prazo: item["Prazo"] || "",
-        urgente: false,
-        dataProduzido: item["Data Produção"] || "",
-      }));
+        const convertido: Peca[] = data.map((item: any) => ({
+          desenho: item["Desenho"] || "",
+          descricao: item["Descrição"] || "",
+          dimensoes: item["Dimensões"] || "",
+          largura: extrairLargura(item["Dimensões"] || ""),
+          prazo: item["Prazo"] || "",
+          urgente: false,
+          dataProduzido: item["Data Produção"] || "",
+        }));
 
-      setHistorico(convertido);
-    } catch (error) {
-      console.error("Erro ao carregar histórico:", error);
+        setHistorico(convertido);
+      } catch (error) {
+        console.error("Erro ao carregar histórico:", error);
+      }
     }
-  }
 
-  carregarDados();
-  carregarHistorico();
-}, []);
+    carregarDados();
+    carregarHistorico();
+  }, []);
 
   const maquina = {
     numero: "6064",
@@ -120,53 +120,53 @@ useEffect(() => {
     fila: sequencia.length,
   };
 
- const sequenciaSugerida = useMemo(() => {
-  const getSetup = (peca: Peca): Setup =>
-    peca.largura <= 400 ? "morsa" : "vacuo";
+  const sequenciaSugerida = useMemo(() => {
+    const getSetup = (peca: Peca): Setup =>
+      peca.largura <= 400 ? "morsa" : "vacuo";
 
-  const getConjunto = (peca: Peca): string => {
-    const obs = peca.observacoes || "";
-    const ordem = peca.ordem || "";
-    return ordem !== "-" && ordem !== "Sem OF" ? ordem : obs;
-  };
+    const getConjunto = (peca: Peca): string => {
+      const obs = peca.observacoes || "";
+      const ordem = peca.ordem || "";
+      return ordem !== "-" && ordem !== "Sem OF" ? ordem : obs;
+    };
 
-  return [...sequencia].sort((a, b) => {
-    const prazoA = converterData(a.prazo);
-    const prazoB = converterData(b.prazo);
+    return [...sequencia].sort((a, b) => {
+      const prazoA = converterData(a.prazo);
+      const prazoB = converterData(b.prazo);
 
-    const setupA = getSetup(a);
-    const setupB = getSetup(b);
+      const setupA = getSetup(a);
+      const setupB = getSetup(b);
 
-    const diferencaDias = Math.abs(prazoA - prazoB) / (1000 * 60 * 60 * 24);
+      const diferencaDias = Math.abs(prazoA - prazoB) / (1000 * 60 * 60 * 24);
 
-    if (a.urgente && !b.urgente) return -1;
-    if (!a.urgente && b.urgente) return 1;
+      if (a.urgente && !b.urgente) return -1;
+      if (!a.urgente && b.urgente) return 1;
 
-    if (prazoA !== prazoB && diferencaDias > 2) {
-      return prazoA - prazoB;
-    }
+      if (prazoA !== prazoB && diferencaDias > 2) {
+        return prazoA - prazoB;
+      }
 
-    if (setupA === setupAtual && setupB !== setupAtual) return -1;
-    if (setupA !== setupAtual && setupB === setupAtual) return 1;
+      if (setupA === setupAtual && setupB !== setupAtual) return -1;
+      if (setupA !== setupAtual && setupB === setupAtual) return 1;
 
-    const conjuntoA = getConjunto(a);
-    const conjuntoB = getConjunto(b);
+      const conjuntoA = getConjunto(a);
+      const conjuntoB = getConjunto(b);
 
-    if (conjuntoA !== conjuntoB) {
-      return conjuntoA.localeCompare(conjuntoB);
-    }
+      if (conjuntoA !== conjuntoB) {
+        return conjuntoA.localeCompare(conjuntoB);
+      }
 
-    if (prazoA !== prazoB) {
-      return prazoA - prazoB;
-    }
+      if (prazoA !== prazoB) {
+        return prazoA - prazoB;
+      }
 
-    if (setupAtual === "morsa") {
-      return a.largura - b.largura;
-    }
+      if (setupAtual === "morsa") {
+        return a.largura - b.largura;
+      }
 
-    return b.largura - a.largura;
-  });
-}, [setupAtual, sequencia]);
+      return b.largura - a.largura;
+    });
+  }, [setupAtual, sequencia]);
 
   function criarSequencia() {
     const hoje = formatarDataHoje();
@@ -196,64 +196,64 @@ useEffect(() => {
     );
   }
 
-async function salvarSequencia() {
-  try {
-    const payload = sequencia.map((peca, index) => ({
-      sequencia: index + 1,
-      desenho: peca.desenho,
-    }));
+  async function salvarSequencia() {
+    try {
+      const payload = sequencia.map((peca, index) => ({
+        sequencia: index + 1,
+        desenho: peca.desenho,
+      }));
 
-    const response = await fetch("/api/fichas/salvar", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+      const response = await fetch("/api/fichas/salvar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    console.log(result);
+      console.log(result);
 
-    alert("Sequência salva com sucesso!");
-  } catch (error) {
-    console.error(error);
+      alert("Sequência salva com sucesso!");
+    } catch (error) {
+      console.error(error);
 
-    alert("Erro ao salvar sequência");
-  }
-}
-
- async function marcarProduzidas() {
-  if (selecionadas.length === 0) return;
-
-  try {
-    const response = await fetch("/api/fichas/produzidas", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(selecionadas),
-    });
-
-    const result = await response.json();
-
-    if (!result.success) {
-      alert("Erro ao marcar produzidas");
-      return;
+      alert("Erro ao salvar sequência");
     }
-
-    setSequencia((atual) =>
-      atual.filter((peca) => !selecionadas.includes(peca.desenho))
-    );
-
-    setSelecionadas([]);
-
-    alert(`Peças produzidas movidas para o histórico: ${result.movidas}`);
-  } catch (error) {
-    console.error(error);
-    alert("Erro ao marcar peças como produzidas");
   }
-}
+
+  async function marcarProduzidas() {
+    if (selecionadas.length === 0) return;
+
+    try {
+      const response = await fetch("/api/fichas/produzidas", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(selecionadas),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        alert("Erro ao marcar produzidas");
+        return;
+      }
+
+      setSequencia((atual) =>
+        atual.filter((peca) => !selecionadas.includes(peca.desenho))
+      );
+
+      setSelecionadas([]);
+
+      alert(`Peças produzidas movidas para o histórico: ${result.movidas}`);
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao marcar peças como produzidas");
+    }
+  }
   function getSetupLabel(peca: Peca) {
     return peca.largura <= 400 ? "Morsa" : "Vácuo";
   }
@@ -284,7 +284,6 @@ async function salvarSequencia() {
                   <div className="grid gap-3 md:grid-cols-[1fr_150px_150px_120px] md:items-center">
                     <div>
                       <p className="text-lg font-bold">{peca.desenho} - {peca.descricao}</p>
-                      <p className="text-sm text-slate-600">Dimensões: {peca.dimensoes}</p>
                     </div>
                     <div>
                       <p className="text-sm text-slate-500">Sequenciado em</p>
@@ -310,7 +309,15 @@ async function salvarSequencia() {
 
   if (pagina === "verSequencia" || pagina === "editarSequencia") {
     const modoEdicao = pagina === "editarSequencia";
+    const contagemOF = sequencia.reduce<Record<string, number>>((acc, peca) => {
+      const of = peca.ordem;
 
+      if (of && of !== "-" && of !== "Sem OF") {
+        acc[of] = (acc[of] || 0) + 1;
+      }
+
+      return acc;
+    }, {});
     return (
       <div className="min-h-screen bg-slate-100 p-6">
         <div className="mx-auto max-w-6xl space-y-6">
@@ -331,60 +338,60 @@ async function salvarSequencia() {
                       : "Modo de produção. Selecione os itens finalizados para enviar ao histórico."}
                   </p>
                 </div>
-    <div className="rounded-2xl bg-white px-5 py-4 shadow-sm border">
-  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-    
-    <div>
-  <p className="text-sm text-slate-500">
-    {modoEdicao
-      ? "Status operacional da máquina"
-      : "Setup considerado na sequência"}
-  </p>
+                <div className="rounded-2xl bg-white px-5 py-4 shadow-sm border">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
-  <p className="text-2xl font-bold mt-1">
-    {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}
-  </p>
-</div>
+                    <div>
+                      <p className="text-sm text-slate-500">
+                        {modoEdicao
+                          ? "Status operacional da máquina"
+                          : "Setup considerado na sequência"}
+                      </p>
 
-{modoEdicao && (
-  <div className="flex gap-2">
-    <Button
-      variant={setupAtual === "morsa" ? "default" : "outline"}
-      onClick={() => setSetupAtual("morsa")}
-    >
-      Morsa
-    </Button>
+                      <p className="text-2xl font-bold mt-1">
+                        {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}
+                      </p>
+                    </div>
 
-    <Button
-      variant={setupAtual === "vacuo" ? "default" : "outline"}
-      onClick={() => setSetupAtual("vacuo")}
-    >
-      Mesa de vácuo
-    </Button>
-  </div>
-)}
-</div>
+                    {modoEdicao && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant={setupAtual === "morsa" ? "default" : "outline"}
+                          onClick={() => setSetupAtual("morsa")}
+                        >
+                          Morsa
+                        </Button>
 
-{modoEdicao && (
-  <Button
-    onClick={salvarSequencia}
-    className="gap-2"
-    variant="outline"
-  >
-    Salvar sequência
-  </Button>
-)}
+                        <Button
+                          variant={setupAtual === "vacuo" ? "default" : "outline"}
+                          onClick={() => setSetupAtual("vacuo")}
+                        >
+                          Mesa de vácuo
+                        </Button>
+                      </div>
+                    )}
+                  </div>
 
-{!modoEdicao && (
-  <Button
-    onClick={marcarProduzidas}
-    disabled={selecionadas.length === 0}
-    className="gap-2"
-  >
-    <CheckCircle2 size={18} /> Marcar produzidas ({selecionadas.length})
-  </Button>
-)}
-</div>
+                  {modoEdicao && (
+                    <Button
+                      onClick={salvarSequencia}
+                      className="gap-2"
+                      variant="outline"
+                    >
+                      Salvar sequência
+                    </Button>
+                  )}
+
+                  {!modoEdicao && (
+                    <Button
+                      onClick={marcarProduzidas}
+                      disabled={selecionadas.length === 0}
+                      className="gap-2"
+                    >
+                      <CheckCircle2 size={18} /> Marcar produzidas ({selecionadas.length})
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -406,23 +413,23 @@ async function salvarSequencia() {
                     draggable={modoEdicao}
                     onDragStart={modoEdicao ? () => setDragIndex(index) : undefined}
                     onDragOver={
-  modoEdicao
-    ? (event) => {
-        event.preventDefault();
+                      modoEdicao
+                        ? (event) => {
+                          event.preventDefault();
 
-        const limiteInferior = window.innerHeight - 120;
-        const limiteSuperior = 120;
+                          const limiteInferior = window.innerHeight - 120;
+                          const limiteSuperior = 120;
 
-        if (event.clientY > limiteInferior) {
-          window.scrollBy(0, 12);
-        }
+                          if (event.clientY > limiteInferior) {
+                            window.scrollBy(0, 12);
+                          }
 
-        if (event.clientY < limiteSuperior) {
-          window.scrollBy(0, -12);
-        }
-      }
-    : undefined
-}
+                          if (event.clientY < limiteSuperior) {
+                            window.scrollBy(0, -12);
+                          }
+                        }
+                        : undefined
+                    }
                     onDrop={modoEdicao ? () => moverItem(dragIndex, index) : undefined}
                     onDragEnd={modoEdicao ? () => setDragIndex(null) : undefined}
                     className={`rounded-2xl p-4 shadow-sm transition ${selecionada ? "bg-green-50 ring-2 ring-green-400" : "bg-white"} ${modoEdicao ? "cursor-move hover:shadow-md" : "cursor-default"}`}
@@ -440,6 +447,14 @@ async function salvarSequencia() {
                           )}
                         </div>
                         <p className="text-sm text-slate-600">Dimensões: {peca.dimensoes}</p>
+                        {peca.ordem &&
+                          contagemOF[peca.ordem] > 1 &&
+                          peca.ordem !== "-" &&
+                          peca.ordem !== "Sem OF" && (
+                            <span className="mt-2 inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                              OF {peca.ordem}
+                            </span>
+                          )}
                       </div>
                       <div>
                         <p className="text-sm text-slate-500">Prazo</p>
@@ -594,11 +609,10 @@ function Button({ children, className = "", variant = "default", disabled = fals
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`rounded-xl px-4 py-2 font-semibold shadow-sm ${
-        variant === "outline"
+      className={`rounded-xl px-4 py-2 font-semibold shadow-sm ${variant === "outline"
           ? "border border-slate-300 bg-white text-slate-700"
           : "bg-slate-900 text-white"
-      } ${disabled ? "opacity-50" : ""} ${className}`}
+        } ${disabled ? "opacity-50" : ""} ${className}`}
     >
       {children}
     </button>
