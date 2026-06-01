@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   History,
   CheckCircle2,
+  Printer,
 } from "lucide-react";
 
 type Pagina = "home" | "maquina" | "verSequencia" | "editarSequencia" | "historico";
@@ -25,6 +26,7 @@ type Peca = {
   dimensoes: string;
   largura: number;
   prazo: string;
+  quantidade?: string;
   urgente: boolean;
   dataSequenciamento?: string;
   dataProduzido?: string;
@@ -76,6 +78,7 @@ export default function Sequenciador6064() {
           dimensoes: item["Dimensões"] || "",
           largura: extrairLargura(item["Dimensões"] || ""),
           prazo: item["Prazo"] || "",
+          quantidade: item["Quantidade"] || "",
           ordem: item["Ordem"] || "",
           observacoes: item["Observações"] || "",
           urgente: (item["Observações"] || "").toLowerCase().includes("urgente"),
@@ -194,6 +197,10 @@ export default function Sequenciador6064() {
         ? atuais.filter((item) => item !== desenho)
         : [...atuais, desenho]
     );
+  }
+
+  function imprimirSequencia() {
+    window.print();
   }
 
   async function salvarSequencia() {
@@ -375,20 +382,59 @@ export default function Sequenciador6064() {
                   )}
 
                   {!modoEdicao && (
-                    <Button
-                      onClick={marcarProduzidas}
-                      disabled={selecionadas.length === 0}
-                      className="gap-2"
-                    >
-                      <CheckCircle2 size={18} /> Marcar produzidas ({selecionadas.length})
-                    </Button>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        onClick={imprimirSequencia}
+                        className="gap-2"
+                        variant="outline"
+                      >
+                        <Printer size={18} /> Imprimir sequência
+                      </Button>
+
+                      <Button
+                        onClick={marcarProduzidas}
+                        disabled={selecionadas.length === 0}
+                        className="gap-2"
+                      >
+                        <CheckCircle2 size={18} /> Marcar produzidas ({selecionadas.length})
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <div className="space-y-3">
+          <div className="print-header hidden">
+            <h1>Sequência 6064 - Deckel</h1>
+            <p>Setup considerado: {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}</p>
+            <p>Peças pendentes: {sequencia.length}</p>
+            <p>Data de impressão: {formatarDataHoje()}</p>
+          </div>
+
+          <div className="print-list hidden">
+            <div className="print-row print-row-header">
+              <span>☐</span>
+              <span>Nº</span>
+              <span>Desenho</span>
+              <span>Descrição</span>
+              <span>Dimensões</span>
+              <span>Qtd</span>
+            </div>
+
+            {sequencia.map((peca, index) => (
+              <div key={`print-${peca.desenho}-${index}`} className="print-row">
+                <span>☐</span>
+                <span>{String(index + 1).padStart(2, "0")}</span>
+                <span>{peca.desenho}</span>
+                <span>{peca.descricao}</span>
+                <span>{peca.dimensoes}</span>
+                <span>{peca.quantidade}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="print-area space-y-3">
             {sequencia.map((peca, index) => {
               const trocaSetup = index > 0 && getSetupLabel(sequencia[index - 1]) !== getSetupLabel(peca);
               const selecionada = selecionadas.includes(peca.desenho);
