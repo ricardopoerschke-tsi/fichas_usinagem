@@ -295,7 +295,17 @@ export default function Sequenciador6064() {
                     </div>
                     <div>
                       <p className="text-sm text-slate-500">Setup</p>
-                      <p className="font-semibold">{getSetupLabel(peca)}</p>
+
+                      <p
+                        className={`font-semibold ${getSetupLabel(peca) === "Morsa"
+                          ? "text-blue-600"
+                          : "text-green-600"
+                          }`}
+                      >
+                        {getSetupLabel(peca) === "Morsa"
+                          ? "🔵 Morsa"
+                          : "🟢 Vácuo"}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -325,7 +335,7 @@ export default function Sequenciador6064() {
             <ArrowLeft size={18} /> Voltar
           </Button>
 
-          <Card className="rounded-2xl shadow-md">
+          <Card className="sticky top-4 z-50 rounded-2xl shadow-md">
             <CardContent className="p-6">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
@@ -343,9 +353,7 @@ export default function Sequenciador6064() {
 
                     <div>
                       <p className="text-sm text-slate-500">
-                        {modoEdicao
-                          ? "Status operacional da máquina"
-                          : "Setup considerado na sequência"}
+                        Setup considerado na sequência
                       </p>
 
                       <p className="text-2xl font-bold mt-1">
@@ -353,23 +361,7 @@ export default function Sequenciador6064() {
                       </p>
                     </div>
 
-                    {modoEdicao && (
-                      <div className="flex gap-2">
-                        <Button
-                          variant={setupAtual === "morsa" ? "default" : "outline"}
-                          onClick={() => setSetupAtual("morsa")}
-                        >
-                          Morsa
-                        </Button>
 
-                        <Button
-                          variant={setupAtual === "vacuo" ? "default" : "outline"}
-                          onClick={() => setSetupAtual("vacuo")}
-                        >
-                          Mesa de vácuo
-                        </Button>
-                      </div>
-                    )}
                   </div>
 
                   {modoEdicao && (
@@ -462,7 +454,15 @@ export default function Sequenciador6064() {
                       </div>
                       <div>
                         <p className="text-sm text-slate-500">Setup</p>
-                        <p className="font-semibold">{getSetupLabel(peca)}</p>
+
+                        <p
+                          className={`font-semibold ${getSetupLabel(peca) === "Morsa"
+                            ? "text-blue-600"
+                            : "text-green-600"
+                            }`}
+                        >
+                          {getSetupLabel(peca) === "Morsa" ? "Morsa" : "Vácuo"}
+                        </p>
                       </div>
                       <div>
                         {!modoEdicao ? (
@@ -518,7 +518,7 @@ export default function Sequenciador6064() {
                   </div>
                 </div>
 
-                <div className="mt-6 grid gap-4 md:grid-cols-3">
+                <div className="mt-6 grid gap-4 md:grid-cols-2">
                   <div className="rounded-2xl bg-white p-4 shadow-sm">
                     <p className="text-sm text-slate-500">Peças na fila</p>
                     <p className="text-3xl font-bold">{maquina.fila}</p>
@@ -526,10 +526,6 @@ export default function Sequenciador6064() {
                   <div className="rounded-2xl bg-white p-4 shadow-sm">
                     <p className="text-sm text-slate-500">Produzidas no histórico</p>
                     <p className="text-3xl font-bold">{historico.length}</p>
-                  </div>
-                  <div className="rounded-2xl bg-white p-4 shadow-sm">
-                    <p className="text-sm text-slate-500">Status</p>
-                    <p className="text-lg font-semibold">Piloto em validação</p>
                   </div>
                 </div>
 
@@ -610,8 +606,8 @@ function Button({ children, className = "", variant = "default", disabled = fals
       onClick={onClick}
       disabled={disabled}
       className={`rounded-xl px-4 py-2 font-semibold shadow-sm ${variant === "outline"
-          ? "border border-slate-300 bg-white text-slate-700"
-          : "bg-slate-900 text-white"
+        ? "border border-slate-300 bg-white text-slate-700"
+        : "bg-slate-900 text-white"
         } ${disabled ? "opacity-50" : ""} ${className}`}
     >
       {children}
