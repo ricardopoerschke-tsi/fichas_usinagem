@@ -5,6 +5,8 @@ import { motion } from "framer-motion";
 import type { Peca } from "@/types/peca";
 import { machine6064 } from "@/lib/machines/6064";
 import { machines } from "@/lib/machines";
+import { sequenciar6064 } from "@/sequencing/sequenciar6064";
+import { Button } from "@/components/ui/Button";
 import {
   ArrowLeft,
   Factory,
@@ -108,53 +110,9 @@ export default function Sequenciador6064() {
     fila: sequencia.length,
   };
 
-  const sequenciaSugerida = useMemo(() => {
-    const getSetup = (peca: Peca): Setup =>
-      peca.largura <= 400 ? "morsa" : "vacuo";
-
-    const getConjunto = (peca: Peca): string => {
-      const obs = peca.observacoes || "";
-      const ordem = peca.ordem || "";
-      return ordem !== "-" && ordem !== "Sem OF" ? ordem : obs;
-    };
-
-    return [...sequencia].sort((a, b) => {
-      const prazoA = converterData(a.prazo);
-      const prazoB = converterData(b.prazo);
-
-      const setupA = getSetup(a);
-      const setupB = getSetup(b);
-
-      const diferencaDias = Math.abs(prazoA - prazoB) / (1000 * 60 * 60 * 24);
-
-      if (a.urgente && !b.urgente) return -1;
-      if (!a.urgente && b.urgente) return 1;
-
-      if (prazoA !== prazoB && diferencaDias > 2) {
-        return prazoA - prazoB;
-      }
-
-      if (setupA === setupAtual && setupB !== setupAtual) return -1;
-      if (setupA !== setupAtual && setupB === setupAtual) return 1;
-
-      const conjuntoA = getConjunto(a);
-      const conjuntoB = getConjunto(b);
-
-      if (conjuntoA !== conjuntoB) {
-        return conjuntoA.localeCompare(conjuntoB);
-      }
-
-      if (prazoA !== prazoB) {
-        return prazoA - prazoB;
-      }
-
-      if (setupAtual === "morsa") {
-        return a.largura - b.largura;
-      }
-
-      return b.largura - a.largura;
-    });
-  }, [setupAtual, sequencia]);
+ const sequenciaSugerida = useMemo(() => {
+  return sequenciar6064(sequencia, setupAtual);
+}, [setupAtual, sequencia]);
 
   function criarSequencia() {
     const hoje = formatarDataHoje();
@@ -653,20 +611,6 @@ function CardContent({ children, className = "" }: CardProps) {
   return <div className={className}>{children}</div>;
 }
 
-function Button({ children, className = "", variant = "default", disabled = false, onClick }: ButtonProps) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={`rounded-xl px-4 py-2 font-semibold shadow-sm ${variant === "outline"
-        ? "border border-slate-300 bg-white text-slate-700"
-        : "bg-slate-900 text-white"
-        } ${disabled ? "opacity-50" : ""} ${className}`}
-    >
-      {children}
-    </button>
-  );
-}
 
 function ActionCard({ icon, title, description, onClick }: ActionCardProps) {
   return (
@@ -680,14 +624,6 @@ function ActionCard({ icon, title, description, onClick }: ActionCardProps) {
       </Card>
     </motion.div>
   );
-}
-
-function converterData(data: string) {
-  if (data === "Hoje") return 0;
-  if (data === "Amanhã") return 1;
-
-  const [dia, mes, ano] = data.split("/").map(Number);
-  return new Date(2000 + ano, mes - 1, dia).getTime();
 }
 
 function extrairLargura(dimensoes: string): number {
