@@ -7,6 +7,7 @@ import { machine6064 } from "@/lib/machines/6064";
 import { machines } from "@/lib/machines";
 import { sequenciar6064 } from "@/sequencing/sequenciar6064";
 import { Button } from "@/components/ui/Button";
+import { Card, CardContent } from "@/components/ui/Card";
 import {
   ArrowLeft,
   Factory,
@@ -24,12 +25,6 @@ import {
 type Pagina = "home" | "maquina" | "verSequencia" | "editarSequencia" | "historico";
 type Setup = "morsa" | "vacuo";
 type SetupForcado = "nenhum" | Setup;
-
-type CardProps = {
-  children: React.ReactNode;
-  className?: string;
-  onClick?: () => void;
-};
 
 type ButtonProps = {
   children: React.ReactNode;
@@ -597,18 +592,6 @@ export default function Sequenciador6064() {
       </div>
     </div>
   );
-}
-
-function Card({ children, className = "", onClick }: CardProps) {
-  return (
-    <div onClick={onClick} className={`bg-white ${className}`}>
-      {children}
-    </div>
-  );
-}
-
-function CardContent({ children, className = "" }: CardProps) {
-  return <div className={className}>{children}</div>;
 }
 
 
