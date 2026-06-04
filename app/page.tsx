@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import type { Peca } from "@/types/peca";
 import { machine6064 } from "@/lib/machines/6064";
 import { machines } from "@/lib/machines";
-import { sequenciar6064 } from "@/sequencing/sequenciar6064";
+import { sequencingStrategies } from "@/sequencing";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/Card";
 import { ActionCard } from "@/components/ui/ActionCard";
@@ -104,8 +104,17 @@ export default function Sequenciador6064() {
   };
 
   const sequenciaSugerida = useMemo(() => {
-    return sequenciar6064(sequencia, setupAtual);
-  }, [setupAtual, sequencia]);
+  const sequenciador =
+    sequencingStrategies[
+      maquinaSelecionada.id as keyof typeof sequencingStrategies
+    ];
+
+  if (!sequenciador) {
+    return sequencia;
+  }
+
+  return sequenciador(sequencia, setupAtual);
+}, [setupAtual, sequencia, maquinaSelecionada]);
 
   function criarSequencia() {
     const hoje = formatarDataHoje();
