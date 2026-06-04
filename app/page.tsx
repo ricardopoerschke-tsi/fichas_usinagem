@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import type { Peca } from "@/types/peca";
+import { machine6064 } from "@/lib/machines/6064";
 import {
   ArrowLeft,
   Factory,
@@ -55,7 +56,7 @@ export default function Sequenciador6064() {
   useEffect(() => {
     async function carregarDados() {
       try {
-        const response = await fetch("/api/fichas/6064");
+        const response = await fetch(machine6064.apiFila);
         const data = await response.json();
 
         const convertido: Peca[] = data.map((item: any) => ({
@@ -78,9 +79,8 @@ export default function Sequenciador6064() {
 
     async function carregarHistorico() {
       try {
-        const response = await fetch("/api/fichas/historico/6064");
+         const response = await fetch(machine6064.apiHistorico);
         const data = await response.json();
-
         const convertido: Peca[] = data.map((item: any) => ({
           desenho: item["Desenho"] || "",
           descricao: item["Descrição"] || "",
@@ -102,12 +102,9 @@ export default function Sequenciador6064() {
   }, []);
 
   const maquina = {
-    numero: "6064",
-    nome: "Deckel",
-    tipo: "Fresadora CNC",
-    material: "Alumínio",
-    fila: sequencia.length,
-  };
+  ...machine6064,
+  fila: sequencia.length,
+};
 
   const sequenciaSugerida = useMemo(() => {
     const getSetup = (peca: Peca): Setup =>
