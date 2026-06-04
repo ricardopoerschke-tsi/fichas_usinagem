@@ -7,7 +7,7 @@ const TOKEN = "6064_teste_123";
 
 export async function POST(request: Request) {
   try {
-    const sequencia = await request.json();
+    const { maquinaId, sequencia } = await request.json();
 
     const response = await fetch(APPS_SCRIPT_URL, {
       method: "POST",
@@ -15,10 +15,11 @@ export async function POST(request: Request) {
         "Content-Type": "text/plain;charset=utf-8",
       },
       body: JSON.stringify({
-  token: TOKEN,
-  acao: "salvarSequencia",
-  sequencia,
-}),
+        token: TOKEN,
+        acao: "salvarSequencia",
+        maquinaId,
+        sequencia,
+      }),
     });
 
     const result = await response.json();

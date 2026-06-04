@@ -7,7 +7,7 @@ const TOKEN = "6064_teste_123";
 
 export async function POST(request: Request) {
   try {
-    const desenhos = await request.json();
+    const { maquinaId, desenhos } = await request.json();
 
     const response = await fetch(APPS_SCRIPT_URL, {
       method: "POST",

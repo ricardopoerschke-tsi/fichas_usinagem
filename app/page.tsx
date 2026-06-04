@@ -47,7 +47,7 @@ export default function Sequenciador6064() {
   useEffect(() => {
     async function carregarDados() {
       try {
-        const response = await fetch(machine6064.apiFila);
+        const response = await fetch(maquinaSelecionada.apiFila);
         const data = await response.json();
 
         const convertido: Peca[] = data.map((item: any) => ({
@@ -70,7 +70,7 @@ export default function Sequenciador6064() {
 
     async function carregarHistorico() {
       try {
-        const response = await fetch(machine6064.apiHistorico);
+        const response = await fetch(maquinaSelecionada.apiHistorico);
         const data = await response.json();
         const convertido: Peca[] = data.map((item: any) => ({
           desenho: item["Desenho"] || "",
@@ -90,7 +90,7 @@ export default function Sequenciador6064() {
 
     carregarDados();
     carregarHistorico();
-  }, []);
+  }, [maquinaSelecionada]);
 
   const maquina = {
     ...maquinaSelecionada,
@@ -133,64 +133,70 @@ export default function Sequenciador6064() {
     window.print();
   }
 
-  async function salvarSequencia() {
-    try {
-      const payload = sequencia.map((peca, index) => ({
-        sequencia: index + 1,
-        desenho: peca.desenho,
-      }));
+ async function salvarSequencia() {
+  try {
+    const payload = sequencia.map((peca, index) => ({
+      sequencia: index + 1,
+      desenho: peca.desenho,
+    }));
 
-      const response = await fetch("/api/fichas/salvar", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+    const response = await fetch("/api/fichas/salvar", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        maquinaId: maquinaSelecionada.id,
+        sequencia: payload,
+      }),
+    });
 
-      const result = await response.json();
+    const result = await response.json();
 
-      console.log(result);
+    console.log(result);
 
-      alert("Sequência salva com sucesso!");
-    } catch (error) {
-      console.error(error);
+    alert("Sequência salva com sucesso!");
+  } catch (error) {
+    console.error(error);
 
-      alert("Erro ao salvar sequência");
-    }
+    alert("Erro ao salvar sequência");
   }
+}
 
-  async function marcarProduzidas() {
-    if (selecionadas.length === 0) return;
+async function marcarProduzidas() {
+  if (selecionadas.length === 0) return;
 
-    try {
-      const response = await fetch("/api/fichas/produzidas", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(selecionadas),
-      });
+  try {
+    const response = await fetch("/api/fichas/produzidas", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        maquinaId: maquinaSelecionada.id,
+        desenhos: selecionadas,
+      }),
+    });
 
-      const result = await response.json();
+    const result = await response.json();
 
-      if (!result.success) {
-        alert("Erro ao marcar produzidas");
-        return;
-      }
-
-      setSequencia((atual) =>
-        atual.filter((peca) => !selecionadas.includes(peca.desenho))
-      );
-
-      setSelecionadas([]);
-
-      alert(`Peças produzidas movidas para o histórico: ${result.movidas}`);
-    } catch (error) {
-      console.error(error);
-      alert("Erro ao marcar peças como produzidas");
+    if (!result.success) {
+      alert("Erro ao marcar produzidas");
+      return;
     }
+
+    setSequencia((atual) =>
+      atual.filter((peca) => !selecionadas.includes(peca.desenho))
+    );
+
+    setSelecionadas([]);
+
+    alert(`Peças produzidas movidas para o histórico: ${result.movidas}`);
+  } catch (error) {
+    console.error(error);
+    alert("Erro ao marcar peças como produzidas");
   }
+}
   function getSetupLabel(peca: Peca) {
     return peca.largura <= 400 ? "Morsa" : "Vácuo";
   }
