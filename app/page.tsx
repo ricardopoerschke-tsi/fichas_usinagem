@@ -50,6 +50,7 @@ export default function Sequenciador6064() {
   const [pagina, setPagina] = useState<Pagina>("home");
   const [setupAtual, setSetupAtual] = useState<Setup>("morsa");
   const [sequencia, setSequencia] = useState<Peca[]>([]);
+  const [maquinaSelecionada, setMaquinaSelecionada] = useState(machine6064);
   const [historico, setHistorico] = useState<Peca[]>([]);
   const [selecionadas, setSelecionadas] = useState<string[]>([]);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -103,7 +104,7 @@ export default function Sequenciador6064() {
   }, []);
 
   const maquina = {
-    ...machine6064,
+    ...maquinaSelecionada,
     fila: sequencia.length,
   };
 
@@ -259,7 +260,7 @@ export default function Sequenciador6064() {
 
           <Card className="rounded-2xl shadow-md">
             <CardContent className="p-6">
-              <h1 className="text-3xl font-bold">Histórico - 6064 Deckel</h1>
+              <h1 className="text-3xl font-bold">Histórico - {maquina.numero} {maquina.nome}</h1>
               <p className="mt-2 text-slate-600">Consulta das peças já produzidas, com data de sequenciamento e data de conclusão.</p>
             </CardContent>
           </Card>
@@ -331,7 +332,9 @@ export default function Sequenciador6064() {
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h1 className="text-3xl font-bold">
-                    {modoEdicao ? "Editar sequência - 6064 Deckel" : "Ver sequência - 6064 Deckel"}
+                    {modoEdicao
+                      ? `Editar sequência - ${maquina.numero} ${maquina.nome}`
+                      : `Ver sequência - ${maquina.numero} ${maquina.nome}`}
                   </h1>
                   <p className="mt-2 text-slate-600">
                     {modoEdicao
@@ -390,7 +393,7 @@ export default function Sequenciador6064() {
           </Card>
 
           <div className="print-header hidden">
-            <h1>Sequência 6064 - Deckel</h1>
+            <h1>Sequência {maquina.numero} - {maquina.nome}</h1>
             <p>Setup considerado: {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}</p>
             <p>Peças pendentes: {sequencia.length}</p>
             <p>Data de impressão: {formatarDataHoje()}</p>
@@ -588,7 +591,10 @@ export default function Sequenciador6064() {
             <motion.div key={machine.id} whileHover={{ scale: 1.02 }}>
               <Card
                 className="cursor-pointer rounded-2xl shadow-md"
-                onClick={() => setPagina("maquina")}
+                onClick={() => {
+                  setMaquinaSelecionada(machine);
+                  setPagina("maquina");
+                }}
               >
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
