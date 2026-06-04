@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import type { Peca } from "@/types/peca";
 import {
   ArrowLeft,
   Factory,
@@ -19,21 +20,6 @@ import {
 type Pagina = "home" | "maquina" | "verSequencia" | "editarSequencia" | "historico";
 type Setup = "morsa" | "vacuo";
 type SetupForcado = "nenhum" | Setup;
-
-type Peca = {
-  desenho: string;
-  descricao: string;
-  dimensoes: string;
-  largura: number;
-  prazo: string;
-  quantidade?: string;
-  urgente: boolean;
-  dataSequenciamento?: string;
-  dataProduzido?: string;
-  status?: string;
-  ordem?: string;
-  observacoes?: string;
-};
 
 type CardProps = {
   children: React.ReactNode;
