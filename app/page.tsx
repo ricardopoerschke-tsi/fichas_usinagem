@@ -43,6 +43,7 @@ export default function Sequenciador6064() {
   const [historico, setHistorico] = useState<Peca[]>([]);
   const [selecionadas, setSelecionadas] = useState<string[]>([]);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [filasPorMaquina, setFilasPorMaquina] = useState<Record<string, number>>({});
 
   useEffect(() => {
     async function carregarDados() {
@@ -63,6 +64,10 @@ export default function Sequenciador6064() {
         }));
 
         setSequencia(convertido);
+        setFilasPorMaquina((atual) => ({
+          ...atual,
+          [maquinaSelecionada.id]: convertido.length,
+        }));
       } catch (error) {
         console.error("Erro ao carregar planilha:", error);
       }
@@ -97,9 +102,9 @@ export default function Sequenciador6064() {
     fila: sequencia.length,
   };
 
- const sequenciaSugerida = useMemo(() => {
-  return sequenciar6064(sequencia, setupAtual);
-}, [setupAtual, sequencia]);
+  const sequenciaSugerida = useMemo(() => {
+    return sequenciar6064(sequencia, setupAtual);
+  }, [setupAtual, sequencia]);
 
   function criarSequencia() {
     const hoje = formatarDataHoje();
@@ -133,70 +138,70 @@ export default function Sequenciador6064() {
     window.print();
   }
 
- async function salvarSequencia() {
-  try {
-    const payload = sequencia.map((peca, index) => ({
-      sequencia: index + 1,
-      desenho: peca.desenho,
-    }));
+  async function salvarSequencia() {
+    try {
+      const payload = sequencia.map((peca, index) => ({
+        sequencia: index + 1,
+        desenho: peca.desenho,
+      }));
 
-    const response = await fetch("/api/fichas/salvar", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        maquinaId: maquinaSelecionada.id,
-        sequencia: payload,
-      }),
-    });
+      const response = await fetch("/api/fichas/salvar", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          maquinaId: maquinaSelecionada.id,
+          sequencia: payload,
+        }),
+      });
 
-    const result = await response.json();
+      const result = await response.json();
 
-    console.log(result);
+      console.log(result);
 
-    alert("Sequência salva com sucesso!");
-  } catch (error) {
-    console.error(error);
+      alert("Sequência salva com sucesso!");
+    } catch (error) {
+      console.error(error);
 
-    alert("Erro ao salvar sequência");
-  }
-}
-
-async function marcarProduzidas() {
-  if (selecionadas.length === 0) return;
-
-  try {
-    const response = await fetch("/api/fichas/produzidas", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        maquinaId: maquinaSelecionada.id,
-        desenhos: selecionadas,
-      }),
-    });
-
-    const result = await response.json();
-
-    if (!result.success) {
-      alert("Erro ao marcar produzidas");
-      return;
+      alert("Erro ao salvar sequência");
     }
-
-    setSequencia((atual) =>
-      atual.filter((peca) => !selecionadas.includes(peca.desenho))
-    );
-
-    setSelecionadas([]);
-
-    alert(`Peças produzidas movidas para o histórico: ${result.movidas}`);
-  } catch (error) {
-    console.error(error);
-    alert("Erro ao marcar peças como produzidas");
   }
-}
+
+  async function marcarProduzidas() {
+    if (selecionadas.length === 0) return;
+
+    try {
+      const response = await fetch("/api/fichas/produzidas", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          maquinaId: maquinaSelecionada.id,
+          desenhos: selecionadas,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        alert("Erro ao marcar produzidas");
+        return;
+      }
+
+      setSequencia((atual) =>
+        atual.filter((peca) => !selecionadas.includes(peca.desenho))
+      );
+
+      setSelecionadas([]);
+
+      alert(`Peças produzidas movidas para o histórico: ${result.movidas}`);
+    } catch (error) {
+      console.error(error);
+      alert("Erro ao marcar peças como produzidas");
+    }
+  }
   function getSetupLabel(peca: Peca) {
     return peca.largura <= 400 ? "Morsa" : "Vácuo";
   }
@@ -567,7 +572,7 @@ async function marcarProduzidas() {
                     <div className="rounded-xl bg-white p-3">
                       <p className="text-slate-500">Fila</p>
                       <p className="text-lg font-semibold">
-                        {machine.id === "6064" ? sequencia.length : 0} peças
+                        {filasPorMaquina[machine.id] ?? 0} peças
                       </p>
                     </div>
 
