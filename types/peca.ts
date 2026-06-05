@@ -11,4 +11,5 @@ export type Peca = {
   status?: string;
   ordem?: string;
   observacoes?: string;
+  material?: string;
 };

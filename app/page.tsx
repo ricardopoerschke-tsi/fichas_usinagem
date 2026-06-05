@@ -46,23 +46,53 @@ export default function Sequenciador6064() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [filasPorMaquina, setFilasPorMaquina] = useState<Record<string, number>>({});
 
+useEffect(() => {
+  async function carregarFilasHome() {
+    try {
+      const resultados = await Promise.all(
+        machines.map(async (machine) => {
+          const response = await fetch(machine.apiFila);
+          const data = await response.json();
+
+          return [machine.id, Array.isArray(data) ? data.length : 0] as const;
+        })
+      );
+
+      setFilasPorMaquina(Object.fromEntries(resultados));
+    } catch (error) {
+      console.error("Erro ao carregar filas das máquinas:", error);
+    }
+  }
+
+  carregarFilasHome();
+}, []);
+
   useEffect(() => {
     async function carregarDados() {
       try {
         const response = await fetch(maquinaSelecionada.apiFila);
         const data = await response.json();
 
-        const convertido: Peca[] = data.map((item: any) => ({
-          desenho: item["Desenho"] || "",
-          descricao: item["Descrição"] || "",
-          dimensoes: item["Dimensões"] || "",
-          largura: extrairLargura(item["Dimensões"] || ""),
-          prazo: item["Prazo"] || "",
-          quantidade: item["Quantidade"] || "",
-          ordem: item["Ordem"] || "",
-          observacoes: item["Observações"] || "",
-          urgente: (item["Observações"] || "").toLowerCase().includes("urgente"),
-        }));
+    const convertido: Peca[] = data.map((item: any) => {
+  const dimensoes = item.dimensoes || item["Dimensões"] || "";
+  const observacoes = item.observacoes || item["Observações"] || "";
+
+  return {
+    desenho: item.desenho || item["Desenho"] || "",
+    descricao: item.descricao || item["Descrição"] || "",
+    dimensoes,
+    largura: item.largura || extrairLargura(dimensoes),
+    prazo: item.prazo || item["Prazo"] || "",
+    quantidade: item.quantidade || item["Quantidade"] || "",
+    ordem: item.ordem || item["Ordem"] || "",
+    observacoes,
+    material: item.material || item["Material"] || "",
+    urgente:
+      item.urgente === true ||
+      String(item.urgente).toLowerCase() === "true" ||
+      observacoes.toLowerCase().includes("urgente"),
+  };
+});
 
         setSequencia(convertido);
         setFilasPorMaquina((atual) => ({
