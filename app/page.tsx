@@ -46,26 +46,26 @@ export default function Sequenciador6064() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [filasPorMaquina, setFilasPorMaquina] = useState<Record<string, number>>({});
 
-useEffect(() => {
-  async function carregarFilasHome() {
-    try {
-      const resultados = await Promise.all(
-        machines.map(async (machine) => {
-          const response = await fetch(machine.apiFila);
-          const data = await response.json();
+  useEffect(() => {
+    async function carregarFilasHome() {
+      try {
+        const resultados = await Promise.all(
+          machines.map(async (machine) => {
+            const response = await fetch(machine.apiFila);
+            const data = await response.json();
 
-          return [machine.id, Array.isArray(data) ? data.length : 0] as const;
-        })
-      );
+            return [machine.id, Array.isArray(data) ? data.length : 0] as const;
+          })
+        );
 
-      setFilasPorMaquina(Object.fromEntries(resultados));
-    } catch (error) {
-      console.error("Erro ao carregar filas das máquinas:", error);
+        setFilasPorMaquina(Object.fromEntries(resultados));
+      } catch (error) {
+        console.error("Erro ao carregar filas das máquinas:", error);
+      }
     }
-  }
 
-  carregarFilasHome();
-}, []);
+    carregarFilasHome();
+  }, []);
 
   useEffect(() => {
     async function carregarDados() {
@@ -73,26 +73,26 @@ useEffect(() => {
         const response = await fetch(maquinaSelecionada.apiFila);
         const data = await response.json();
 
-    const convertido: Peca[] = data.map((item: any) => {
-  const dimensoes = item.dimensoes || item["Dimensões"] || "";
-  const observacoes = item.observacoes || item["Observações"] || "";
+        const convertido: Peca[] = data.map((item: any) => {
+          const dimensoes = item.dimensoes || item["Dimensões"] || "";
+          const observacoes = item.observacoes || item["Observações"] || "";
 
-  return {
-    desenho: item.desenho || item["Desenho"] || "",
-    descricao: item.descricao || item["Descrição"] || "",
-    dimensoes,
-    largura: item.largura || extrairLargura(dimensoes),
-    prazo: item.prazo || item["Prazo"] || "",
-    quantidade: item.quantidade || item["Quantidade"] || "",
-    ordem: item.ordem || item["Ordem"] || "",
-    observacoes,
-    material: item.material || item["Material"] || "",
-    urgente:
-      item.urgente === true ||
-      String(item.urgente).toLowerCase() === "true" ||
-      observacoes.toLowerCase().includes("urgente"),
-  };
-});
+          return {
+            desenho: item.desenho || item["Desenho"] || "",
+            descricao: item.descricao || item["Descrição"] || "",
+            dimensoes,
+            largura: item.largura || extrairLargura(dimensoes),
+            prazo: item.prazo || item["Prazo"] || "",
+            quantidade: item.quantidade || item["Quantidade"] || "",
+            ordem: item.ordem || item["Ordem"] || "",
+            observacoes,
+            material: item.material || item["Material"] || "",
+            urgente:
+              item.urgente === true ||
+              String(item.urgente).toLowerCase() === "true" ||
+              observacoes.toLowerCase().includes("urgente"),
+          };
+        });
 
         setSequencia(convertido);
         setFilasPorMaquina((atual) => ({
@@ -134,17 +134,17 @@ useEffect(() => {
   };
 
   const sequenciaSugerida = useMemo(() => {
-  const sequenciador =
-    sequencingStrategies[
+    const sequenciador =
+      sequencingStrategies[
       maquinaSelecionada.id as keyof typeof sequencingStrategies
-    ];
+      ];
 
-  if (!sequenciador) {
-    return sequencia;
-  }
+    if (!sequenciador) {
+      return sequencia;
+    }
 
-  return sequenciador(sequencia, setupAtual);
-}, [setupAtual, sequencia, maquinaSelecionada]);
+    return sequenciador(sequencia, setupAtual);
+  }, [setupAtual, sequencia, maquinaSelecionada]);
 
   function criarSequencia() {
     const hoje = formatarDataHoje();
@@ -246,6 +246,10 @@ useEffect(() => {
     return peca.largura <= 400 ? "Morsa" : "Vácuo";
   }
 
+  function usaSetupMorsaVacuo(maquinaId: string) {
+    return maquinaId === "6064";
+  }
+
   if (pagina === "historico") {
     return (
       <div className="min-h-screen bg-slate-100 p-6">
@@ -281,20 +285,22 @@ useEffect(() => {
                       <p className="text-sm text-slate-500">Produzido em</p>
                       <p className="font-semibold">{peca.dataProduzido}</p>
                     </div>
-                    <div>
-                      <p className="text-sm text-slate-500">Setup</p>
+                    {usaSetupMorsaVacuo(maquinaSelecionada.id) && (
+                      <div>
+                        <p className="text-sm text-slate-500">Setup</p>
 
-                      <p
-                        className={`font-semibold ${getSetupLabel(peca) === "Morsa"
-                          ? "text-blue-600"
-                          : "text-green-600"
-                          }`}
-                      >
-                        {getSetupLabel(peca) === "Morsa"
-                          ? "🔵 Morsa"
-                          : "🟢 Vácuo"}
-                      </p>
-                    </div>
+                        <p
+                          className={`font-semibold ${getSetupLabel(peca) === "Morsa"
+                            ? "text-blue-600"
+                            : "text-green-600"
+                            }`}
+                        >
+                          {getSetupLabel(peca) === "Morsa"
+                            ? "🔵 Morsa"
+                            : "🟢 Vácuo"}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -341,15 +347,17 @@ useEffect(() => {
                 <div className="rounded-2xl bg-white px-5 py-4 shadow-sm border">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
-                    <div>
-                      <p className="text-sm text-slate-500">
-                        Setup considerado na sequência
-                      </p>
+                    {usaSetupMorsaVacuo(maquinaSelecionada.id) && (
+                      <div>
+                        <p className="text-sm text-slate-500">
+                          Setup considerado na sequência
+                        </p>
 
-                      <p className="text-2xl font-bold mt-1">
-                        {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}
-                      </p>
-                    </div>
+                        <p className="text-2xl font-bold mt-1">
+                          {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}
+                        </p>
+                      </div>
+                    )}
 
 
                   </div>
@@ -419,7 +427,10 @@ useEffect(() => {
 
           <div className="print-area space-y-3">
             {sequencia.map((peca, index) => {
-              const trocaSetup = index > 0 && getSetupLabel(sequencia[index - 1]) !== getSetupLabel(peca);
+              const trocaSetup =
+                usaSetupMorsaVacuo(maquinaSelecionada.id) &&
+                index > 0 &&
+                getSetupLabel(sequencia[index - 1]) !== getSetupLabel(peca);
               const selecionada = selecionadas.includes(peca.desenho);
 
               return (
@@ -534,17 +545,19 @@ useEffect(() => {
                     <h1 className="text-3xl font-bold">Maq: {maquina.numero} {maquina.nome}</h1>
                     <p className="mt-2 text-slate-600">{maquina.tipo} • Material padrão: {maquina.material}</p>
                   </div>
-                  <div className="rounded-2xl bg-slate-200 px-4 py-3 text-right">
-                    <p className="text-sm text-slate-500">Setup atual</p>
-                    <select
-                      value={setupAtual}
-                      onChange={(event) => setSetupAtual(event.target.value as Setup)}
-                      className="mt-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-lg font-semibold"
-                    >
-                      <option value="morsa">Morsa</option>
-                      <option value="vacuo">Mesa de vácuo</option>
-                    </select>
-                  </div>
+                  {usaSetupMorsaVacuo(maquinaSelecionada.id) && (
+                    <div className="rounded-2xl bg-slate-200 px-4 py-3 text-right">
+                      <p className="text-sm text-slate-500">Setup atual</p>
+                      <select
+                        value={setupAtual}
+                        onChange={(event) => setSetupAtual(event.target.value as Setup)}
+                        className="mt-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-lg font-semibold"
+                      >
+                        <option value="morsa">Morsa</option>
+                        <option value="vacuo">Mesa de vácuo</option>
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-6 grid gap-4 md:grid-cols-2">
