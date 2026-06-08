@@ -601,7 +601,7 @@ export default function Sequenciador6064() {
               key={machine.id}
               machine={machine}
               fila={filasPorMaquina[machine.id] ?? 0}
-              status={machine.id === "6064" ? "Ativa" : "Em preparação"}
+              status={machine.id === "6064" ? "Ativa" : "Ativa"}
               onClick={() => {
                 setMaquinaSelecionada(machine);
                 setPagina("maquina");
