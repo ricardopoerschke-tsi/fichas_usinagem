@@ -58,6 +58,8 @@ const CASTANHAS_DEDICADAS_5825 = [6, 10, 12, 16, 19, 22, 25, 32];
 const BITOLAS_BRUTAS_5825: Record<string, number[]> = {
   ALUMINIO: [9.5, 12.7, 19.5, 25, 32, 38, 50, 63, 76, 88, 101],
 
+  NYLON: [20, 30, 40, 50, 60, 80, 101],
+
   D6: [12, 15.8, 18, 25, 31, 38, 50, 76],
 
   "1020": [
