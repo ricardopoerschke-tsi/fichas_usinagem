@@ -17,6 +17,7 @@ export async function POST(request: Request) {
       body: JSON.stringify({
         token: TOKEN,
         acao: "produzidas",
+        maquinaId,
         desenhos,
       }),
     });

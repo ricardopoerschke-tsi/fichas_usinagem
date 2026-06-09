@@ -39,7 +39,8 @@ export async function GET() {
     skipEmptyLines: true,
   });
 
-  const fichas: Peca[] = parsed.data.map((linha) => ({
+ const fichas: Peca[] = parsed.data
+  .map((linha) => ({
     desenho: linha.Desenho ?? "",
     descricao: linha.Descrição ?? "",
     dimensoes: linha.Dimensões ?? "",
@@ -50,7 +51,8 @@ export async function GET() {
     ordem: linha.Ordem ?? "",
     observacoes: linha.Observações ?? "",
     material: linha.Material ?? "",
-  }));
+  }))
+  .filter((peca) => peca.desenho.trim() !== "");
 
   return NextResponse.json(fichas);
 }

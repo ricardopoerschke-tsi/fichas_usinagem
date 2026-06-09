@@ -109,13 +109,20 @@ export default function Sequenciador6064() {
         const response = await fetch(maquinaSelecionada.apiHistorico);
         const data = await response.json();
         const convertido: Peca[] = data.map((item: any) => ({
-          desenho: item["Desenho"] || "",
-          descricao: item["Descrição"] || "",
-          dimensoes: item["Dimensões"] || "",
-          largura: extrairLargura(item["Dimensões"] || ""),
-          prazo: item["Prazo"] || "",
+          desenho: item.desenho || item["Desenho"] || "",
+          descricao: item.descricao || item["Descrição"] || "",
+          dimensoes: item.dimensoes || item["Dimensões"] || "",
+          largura: extrairLargura(
+            item.dimensoes || item["Dimensões"] || ""
+          ),
+          prazo: item.prazo || item["Prazo"] || "",
+          quantidade: item.quantidade || item["Quantidade"] || "",
+          ordem: item.ordem || item["Ordem"] || "",
+          observacoes: item.observacoes || item["Observações"] || "",
+          material: item.material || item["Material"] || "",
           urgente: false,
-          dataProduzido: item["Data Produção"] || "",
+          dataProduzido:
+            item.dataProduzido || item["Data Produção"] || "",
         }));
 
         setHistorico(convertido);
