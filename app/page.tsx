@@ -76,6 +76,7 @@ export default function Sequenciador6064() {
         const convertido: Peca[] = data.map((item: any) => {
           const dimensoes = item.dimensoes || item["Dimensões"] || "";
           const observacoes = item.observacoes || item["Observações"] || "";
+          const ordemMes = item.ordemMes || item["Ordem mes"] || item["Ordem MES"] || item["Ordem Mes"] || "";
 
           return {
             desenho: item.desenho || item["Desenho"] || "",
@@ -85,6 +86,7 @@ export default function Sequenciador6064() {
             prazo: item.prazo || item["Prazo"] || "",
             quantidade: item.quantidade || item["Quantidade"] || "",
             ordem: item.ordem || item["Ordem"] || "",
+            ordemMes,
             observacoes,
             material: item.material || item["Material"] || "",
             urgente:
@@ -408,6 +410,7 @@ export default function Sequenciador6064() {
               <span>☐</span>
               <span>Nº</span>
               <span>Desenho</span>
+              <span>Ordem MES</span>
               <span>Descrição</span>
               <span>Dimensões</span>
               <span>Qtd</span>
@@ -418,6 +421,7 @@ export default function Sequenciador6064() {
                 <span>☐</span>
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <span>{peca.desenho}</span>
+                <span>{peca.ordemMes?.trim() || "-"}</span>
                 <span>{peca.descricao}</span>
                 <span>{peca.dimensoes}</span>
                 <span>{peca.quantidade}</span>

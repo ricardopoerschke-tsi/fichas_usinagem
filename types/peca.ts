@@ -10,6 +10,7 @@ export type Peca = {
   dataProduzido?: string;
   status?: string;
   ordem?: string;
+  ordemMes?: string;
   observacoes?: string;
   material?: string;
 };

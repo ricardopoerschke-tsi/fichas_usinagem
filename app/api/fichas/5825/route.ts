@@ -49,6 +49,7 @@ export async function GET() {
     quantidade: linha.Quantidade ?? "",
     urgente: (linha.Observações ?? "").toLowerCase().includes("urgente"),
     ordem: linha.Ordem ?? "",
+    ordemMes: linha["Ordem mes"] ?? "",
     observacoes: linha.Observações ?? "",
     material: linha.Material ?? "",
   }));
