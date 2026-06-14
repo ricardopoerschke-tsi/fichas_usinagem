@@ -120,6 +120,9 @@ export default function Sequenciador6064() {
             largura: extrairLargura(dimensoes),
             prazo: item.prazo || item["Prazo"] || "",
             quantidade: item.quantidade || item["Quantidade"] || "",
+            ordem: item.ordem || item["Ordem"] || "",
+            observacoes: item.observacoes || item["Observações"] || "",
+            material: item.material || item["Material"] || "",
             urgente: false,
             dataProduzido: item.dataProduzido || item["Data Produção"] || "",
           };

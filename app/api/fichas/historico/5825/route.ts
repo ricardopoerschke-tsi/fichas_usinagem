@@ -40,19 +40,21 @@ export async function GET() {
     skipEmptyLines: true,
   });
 
-  const fichas: Peca[] = parsed.data.map((linha) => ({
-    desenho: linha.Desenho ?? "",
-    descricao: linha.Descrição ?? "",
-    dimensoes: linha.Dimensões ?? "",
-    largura: 0,
-    prazo: linha.Prazo ?? "",
-    quantidade: linha.Quantidade ?? "",
-    urgente: false,
-    ordem: linha.Ordem ?? "",
-    observacoes: linha.Observações ?? "",
-    material: linha.Material ?? "",
-    dataProduzido: linha["Data Produção"] ?? "",
-  }));
+  const fichas: Peca[] = parsed.data
+    .map((linha) => ({
+      desenho: linha.Desenho ?? "",
+      descricao: linha.Descrição ?? "",
+      dimensoes: linha.Dimensões ?? "",
+      largura: 0,
+      prazo: linha.Prazo ?? "",
+      quantidade: linha.Quantidade ?? "",
+      urgente: false,
+      ordem: linha.Ordem ?? "",
+      observacoes: linha.Observações ?? "",
+      material: linha.Material ?? "",
+      dataProduzido: linha["Data Produção"] ?? "",
+    }))
+    .filter((peca) => peca.desenho.trim() !== "");
 
   return NextResponse.json(fichas);
 }
