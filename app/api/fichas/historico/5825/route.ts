@@ -16,6 +16,7 @@ type LinhaPlanilha5825 = {
   Ordem?: string;
   Prazo?: string;
   Observações?: string;
+  "Data Produção"?: string;
 };
 
 export async function GET() {
@@ -50,6 +51,7 @@ export async function GET() {
     ordem: linha.Ordem ?? "",
     observacoes: linha.Observações ?? "",
     material: linha.Material ?? "",
+    dataProduzido: linha["Data Produção"] ?? "",
   }));
 
   return NextResponse.json(fichas);
