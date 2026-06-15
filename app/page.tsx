@@ -96,10 +96,20 @@ export default function Sequenciador6064() {
           };
         });
 
-        setSequencia(convertido);
+        const sequenciador =
+          sequencingStrategies[
+          maquinaSelecionada.id as keyof typeof sequencingStrategies
+          ];
+
+        const convertidoSequenciado = sequenciador
+          ? sequenciador(convertido, setupAtual)
+          : convertido;
+
+        setSequencia(convertidoSequenciado);
+
         setFilasPorMaquina((atual) => ({
           ...atual,
-          [maquinaSelecionada.id]: convertido.length,
+          [maquinaSelecionada.id]: convertidoSequenciado.length,
         }));
       } catch (error) {
         console.error("Erro ao carregar planilha:", error);
@@ -504,18 +514,22 @@ export default function Sequenciador6064() {
                         <p className="text-sm text-slate-500">Prazo</p>
                         <p className="font-semibold">{peca.prazo}</p>
                       </div>
-                      <div>
-                        <p className="text-sm text-slate-500">Setup</p>
+                      {usaSetupMorsaVacuo(maquinaSelecionada.id) && (
+                        <div>
+                          <p className="text-sm text-slate-500">Setup</p>
 
-                        <p
-                          className={`font-semibold ${getSetupLabel(peca) === "Morsa"
-                            ? "text-blue-600"
-                            : "text-green-600"
-                            }`}
-                        >
-                          {getSetupLabel(peca) === "Morsa" ? "Morsa" : "Vácuo"}
-                        </p>
-                      </div>
+                          <p
+                            className={`font-semibold ${getSetupLabel(peca) === "Morsa"
+                                ? "text-blue-600"
+                                : "text-green-600"
+                              }`}
+                          >
+                            {getSetupLabel(peca) === "Morsa"
+                              ? "🔵 Morsa"
+                              : "🟢 Vácuo"}
+                          </p>
+                        </div>
+                      )}
                       <div>
                         {!modoEdicao ? (
                           <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold">
