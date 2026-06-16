@@ -1,17 +1,18 @@
 import type { Peca } from "@/types/peca";
+import {
+  normalizarTexto,
+  prazoInternoTimestamp,
+  prioridadeProcessoAdicional,
+  prioridadeUrgenciaProdutiva,
+  temProcessoAdicional,
+} from "./regrasFluxoProdutivo";
 
 type Peca1572 = Peca & {
   ferramentaSequenciamento: number;
 };
 
 const LIMITE_PECAS_PARA_SUBIR_FERRAMENTA = 2;
-
-function normalizarTexto(valor?: string) {
-  return (valor ?? "")
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-}
+const DIAS_ANTECIPACAO_1572 = 20;
 
 function extrairNumeros(dimensoes?: string) {
   return (
@@ -37,25 +38,8 @@ function getMedidas(peca: Peca) {
   };
 }
 
-function getPrazoTimestamp(peca: Peca) {
-  if (!peca.prazo) return new Date("2999-12-31").getTime();
-
-  const [dia, mes, ano] = peca.prazo.split("/");
-  if (!dia || !mes || !ano) return new Date("2999-12-31").getTime();
-
-  return new Date(`${ano}-${mes}-${dia}`).getTime();
-}
-
-function temProcessoExterno(peca: Peca) {
-  const obs = normalizarTexto(peca.observacoes);
-
-  return (
-    obs.includes("tempera") ||
-    obs.includes("solda") ||
-    obs.includes("oxidacao") ||
-    obs.includes("revestimento") ||
-    obs.includes("tratamento")
-  );
+function getPrazoInternoTimestamp(peca: Peca) {
+  return prazoInternoTimestamp(peca.prazo, DIAS_ANTECIPACAO_1572);
 }
 
 function isInox304(peca: Peca) {
@@ -85,9 +69,9 @@ function getQuantidade(peca: Peca) {
 
 function getChaveGrupo(peca: Peca) {
   return [
-    temProcessoExterno(peca) ? "externo" : "normal",
-    getPrazoTimestamp(peca),
-    isInox304(peca) ? "inox304" : "outros",
+    prioridadeUrgenciaProdutiva(peca, DIAS_ANTECIPACAO_1572),
+    temProcessoAdicional(peca) ? "processo-adicional" : "normal",
+    getPrazoInternoTimestamp(peca),
     getGrupoComprimento(peca),
   ].join("|");
 }
@@ -165,30 +149,30 @@ export function sequenciar1572(pecas: Peca[]) {
   const pecasComFerramenta = ajustarFerramentaPorQuantidade(pecas);
 
   return [...pecasComFerramenta].sort((a, b) => {
-    const processoA = temProcessoExterno(a) ? 0 : 1;
-    const processoB = temProcessoExterno(b) ? 0 : 1;
+    const urgenciaA = prioridadeUrgenciaProdutiva(a, DIAS_ANTECIPACAO_1572);
+    const urgenciaB = prioridadeUrgenciaProdutiva(b, DIAS_ANTECIPACAO_1572);
+
+    if (urgenciaA !== urgenciaB) return urgenciaA - urgenciaB;
+
+    const processoA = prioridadeProcessoAdicional(a);
+    const processoB = prioridadeProcessoAdicional(b);
 
     if (processoA !== processoB) return processoA - processoB;
 
-    const prazoA = getPrazoTimestamp(a);
-    const prazoB = getPrazoTimestamp(b);
+    const prazoA = getPrazoInternoTimestamp(a);
+    const prazoB = getPrazoInternoTimestamp(b);
 
     if (prazoA !== prazoB) return prazoA - prazoB;
 
-    const inoxA = isInox304(a) ? 0 : 1;
-    const inoxB = isInox304(b) ? 0 : 1;
-
-    if (inoxA !== inoxB) return inoxA - inoxB;
+    if (a.ferramentaSequenciamento !== b.ferramentaSequenciamento) {
+      return a.ferramentaSequenciamento - b.ferramentaSequenciamento;
+    }
 
     const grupoComprimentoA = getGrupoComprimento(a);
     const grupoComprimentoB = getGrupoComprimento(b);
 
     if (grupoComprimentoA !== grupoComprimentoB) {
       return grupoComprimentoA - grupoComprimentoB;
-    }
-
-    if (a.ferramentaSequenciamento !== b.ferramentaSequenciamento) {
-      return a.ferramentaSequenciamento - b.ferramentaSequenciamento;
     }
 
     const medidasA = getMedidas(a);
@@ -211,6 +195,14 @@ export function sequenciar1572(pecas: Peca[]) {
     if (medidasA.comprimento !== medidasB.comprimento) {
       return medidasA.comprimento - medidasB.comprimento;
     }
+
+    const inoxA = isInox304(a) ? 0 : 1;
+    const inoxB = isInox304(b) ? 0 : 1;
+
+    if (inoxA !== inoxB) return inoxA - inoxB;
+
+    const comparacaoMaterial = compararTexto(a.material, b.material);
+    if (comparacaoMaterial !== 0) return comparacaoMaterial;
 
     return compararTexto(a.desenho, b.desenho);
   });
