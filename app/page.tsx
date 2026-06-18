@@ -430,6 +430,8 @@ export default function Sequenciador6064() {
               <span>Desenho</span>
               <span>Ordem MES</span>
               <span>Descrição</span>
+              <span>Ordem</span>
+              <span>Material</span>
               <span>Dimensões</span>
               <span>Qtd</span>
             </div>
@@ -441,6 +443,8 @@ export default function Sequenciador6064() {
                 <span>{peca.desenho}</span>
                 <span>{peca.ordemMes?.trim() || "-"}</span>
                 <span>{peca.descricao}</span>
+                <span>{peca.ordem?.trim() || "-"}</span>
+                <span>{peca.material}</span>
                 <span>{peca.dimensoes}</span>
                 <span>{peca.quantidade}</span>
               </div>

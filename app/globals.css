@@ -67,8 +67,8 @@ body {
 
   .print-row {
     display: grid;
-    grid-template-columns: 20px 28px 90px 76px minmax(170px, 0.75fr) 110px 34px;
-    gap: 6px;
+    grid-template-columns: 18px 24px 80px 70px 140px 60px 85px 100px 28px;
+    gap: 4px;
     padding: 3px 0;
     border-bottom: 1px solid #ddd;
   }
