@@ -2,12 +2,10 @@ import { NextResponse } from "next/server";
 import Papa from "papaparse";
 
 const SHEET_ID = "11T23VDaDuo001eioqpcYVdQhTVUBMAoqKLXTx0j1rv0";
-const SHEET_GID = "170376597";
+const SHEET_NAME = "Historico_725";
 
 export async function GET() {
-  // A exportacao CSV preserva valores alfanumericos em colunas que tambem
-  // contem numeros. O endpoint gviz infere o tipo da coluna e descartava M2.
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
 
   const response = await fetch(url, {
     cache: "no-store",
@@ -15,7 +13,7 @@ export async function GET() {
 
   if (!response.ok) {
     return NextResponse.json(
-      { error: "Erro ao buscar planilha" },
+      { error: "Erro ao buscar histórico" },
       { status: 500 }
     );
   }
