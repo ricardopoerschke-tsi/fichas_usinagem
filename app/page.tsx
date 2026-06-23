@@ -199,12 +199,12 @@ export default function Sequenciador6064() {
   }
 
   async function salvarSequencia() {
-    try {
-      const payload = sequencia.map((peca, index) => ({
-        sequencia: index + 1,
-        desenho: peca.desenho,
-      }));
+    const payload = sequencia.map((peca, index) => ({
+      sequencia: index + 1,
+      desenho: peca.desenho,
+    }));
 
+    try {
       const response = await fetch("/api/fichas/salvar", {
         method: "POST",
         headers: {
@@ -216,13 +216,30 @@ export default function Sequenciador6064() {
         }),
       });
 
-      const result = await response.json();
+      const result = await response.json().catch(() => null);
 
-      console.log(result);
+      if (!response.ok || !result?.success) {
+        console.error("Falha ao persistir a sequencia", {
+          status: response.status,
+          statusText: response.statusText,
+          resposta: result,
+          maquinaId: maquinaSelecionada.id,
+        });
+
+        const mensagem =
+          result?.error || result?.details || "Resposta invalida da API";
+
+        alert(`Erro ao salvar sequência: ${mensagem}`);
+        return;
+      }
 
       alert("Sequência salva com sucesso!");
     } catch (error) {
-      console.error(error);
+      console.error("Falha ao persistir a sequencia", {
+        error,
+        maquinaId: maquinaSelecionada.id,
+        sequencia: payload,
+      });
 
       alert("Erro ao salvar sequência");
     }

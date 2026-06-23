@@ -1,866 +1,176 @@
-# PROJETO: SEQUENCIADOR DE PRODUÇÃO
+# Projeto: Sequenciador de Usinagem
 
-## Visão Geral
+## Objetivo do projeto
 
-Sistema web desenvolvido para auxiliar o sequenciamento de produção de máquinas CNC.
+O Sequenciador de Usinagem é um sistema web para organizar filas de produção de máquinas de usinagem a partir da planilha `fichas_usinagem`.
 
-O objetivo principal é reduzir trocas de setup, organizar a fila de produção, tratar urgências de forma controlada e fornecer rastreabilidade da produção realizada.
+O sistema lê as fichas pendentes de cada máquina, aplica uma regra de sequenciamento específica, permite ajustes manuais na interface e persiste a nova ordem na planilha por meio de um Google Apps Script.
 
-O projeto foi iniciado utilizando a máquina 6064 (Deckel) como piloto.
+O objetivo operacional é apoiar o planejamento e o chão de fábrica, reduzindo trocas desnecessárias, agrupando peças compatíveis e mantendo rastreabilidade por histórico.
 
-O desenvolvimento está sendo realizado por Ricardo Poerschke utilizando Next.js, React, TypeScript, Google Sheets e Google Apps Script.
+## Tecnologias utilizadas
 
----
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS
+- Framer Motion
+- Lucide React
+- PapaParse
+- Google Sheets
+- Google Apps Script
 
-# Objetivos do Projeto
-
-## Objetivos Operacionais
-
-* Reduzir trocas de setup.
-* Organizar a fila de produção.
-* Melhorar o cumprimento de prazos.
-* Permitir ajustes rápidos para urgências.
-* Registrar histórico de produção.
-* Facilitar o trabalho do operador e do planejador.
-
-## Objetivos Futuros
-
-* Controle de capacidade.
-* Controle de demanda.
-* APS simplificado.
-* Indicadores de produção.
-* Expansão para outras máquinas.
-
----
-
-# Status Atual
-
-## Fase 1 - Máquina 6064
-
-### Concluído
-
-* Sequenciamento automático.
-* Edição manual da sequência.
-* Drag and drop.
-* Auto-scroll durante drag.
-* Integração com Google Sheets.
-* Salvamento da sequência.
-* Persistência da fila.
-* Histórico de produção.
-* Contador real de produzidas.
-* Sincronização via GitHub.
-
-### Em validação
-
-* Uso operacional contínuo.
-* Ajustes de ergonomia.
-* Ajustes visuais.
-* Refinamento das regras.
-
-### Não iniciado
-
-* Hospedagem.
-* Segunda máquina.
-* Controle de capacidade.
-
----
-
-# Arquitetura
-
-## Frontend
-
-Tecnologias:
-
-* Next.js
-* React
-* TypeScript
-* Tailwind CSS
-
-Arquivos principais:
+## Estrutura geral das pastas
 
 ```text
-app/page.tsx
+fichas_usinagem/
+├─ app/
+│  ├─ page.tsx
+│  ├─ layout.tsx
+│  ├─ globals.css
+│  └─ api/
+│     └─ fichas/
+├─ components/
+│  ├─ MachineCard.tsx
+│  └─ ui/
+├─ lib/
+│  └─ machines/
+├─ sequencing/
+├─ types/
+├─ docs/
+├─ public/
+├─ package.json
+├─ tsconfig.json
+└─ next.config.ts
 ```
 
-Responsável por:
+### `app/`
 
-* Navegação.
-* Sequenciamento.
-* Edição.
-* Histórico.
-* Integração com APIs.
+Contém a aplicação Next.js.
 
----
+O arquivo principal é `app/page.tsx`, responsável pela tela inicial, seleção de máquina, carregamento de dados, criação/edição da sequência, salvamento e marcação de peças produzidas.
 
-## APIs
+As rotas em `app/api/fichas/` fazem a ponte entre o frontend, o Google Sheets e o Apps Script.
 
-### Leitura da fila
+### `components/`
+
+Contém componentes de interface reutilizados pela página principal:
+
+- cartões das máquinas;
+- botões;
+- cards de ações;
+- estrutura visual dos cards.
+
+### `lib/machines/`
+
+Contém o cadastro das máquinas disponíveis no sistema.
+
+Cada máquina possui um arquivo próprio com dados como:
+
+- `id`;
+- número;
+- nome;
+- tipo;
+- material;
+- nome da aba da fila;
+- nome da aba de histórico;
+- rotas de API.
+
+### `sequencing/`
+
+Contém as regras de sequenciamento.
+
+Cada máquina possui uma função própria de ordenação, registrada em `sequencing/index.ts`.
+
+### `types/`
+
+Contém os tipos TypeScript compartilhados, principalmente:
+
+- `Peca`;
+- `Machine`.
+
+### `docs/`
+
+Contém a documentação técnica do projeto.
+
+## Máquinas atualmente implementadas
+
+| Máquina | Nome | Tipo | Material predominante | Aba da fila | Aba de histórico |
+| --- | --- | --- | --- | --- | --- |
+| 6064 | Deckel | Fresadora CNC | Alumínio | `6064` | `Historico_6064` |
+| 5825 | Torno CNC | Torno CNC | Aço | `5825` | `Historico_5825` |
+| 1572 | Fresadora | Fresadora Convencional | Aço | `1572` | `Historico_1572` |
+| 1516 | Mandriladora | Mandriladora Convencional | Aço | `1516` | `Historico_1516` |
+| 725 | Induma CNC | Fresa CNC | Aço | `725` | `Historico_725` |
+
+## Funcionalidades principais
+
+- Painel inicial com as máquinas cadastradas.
+- Leitura da fila ativa de cada máquina no Google Sheets.
+- Leitura do histórico de cada máquina.
+- Criação de sequência automática com regra específica por máquina.
+- Edição manual da sequência por arrastar e soltar.
+- Salvamento da sequência na planilha.
+- Marcação de peças produzidas.
+- Movimentação de peças produzidas para a aba de histórico.
+- Impressão da sequência.
+- Exibição de contadores de fila e histórico.
+
+Observação: a interface possui um card visual de "Adicionar fichas", mas não há fluxo implementado no código atual para importar ou cadastrar novas fichas pela aplicação.
+
+## Fluxo geral do sistema
 
 ```text
-/api/fichas/6064
+Usuário
+↓
+Interface em app/page.tsx
+↓
+Cadastro da máquina em lib/machines
+↓
+Regra de sequenciamento em sequencing
+↓
+Rotas API em app/api/fichas
+↓
+Apps Script
+↓
+Google Sheets
 ```
 
-Função:
+O sistema utiliza o `machineId` da máquina selecionada para decidir:
 
-Ler a aba:
+- qual rota de fila deve ser chamada;
+- qual rota de histórico deve ser chamada;
+- qual regra de sequenciamento deve ser aplicada;
+- qual aba da planilha deve ser atualizada pelo Apps Script.
 
-```text
-6064
-```
+## Dependências externas
 
-da planilha.
+### Google Sheets
 
----
+O Google Sheets é a base de dados operacional do sistema.
 
-### Salvar sequência
+Cada máquina possui:
 
-```text
-/api/fichas/salvar
-```
+- uma aba de fila ativa;
+- uma aba de histórico.
 
-Função:
+As rotas de leitura usam exportação CSV do Google Sheets e transformam os dados com PapaParse.
 
-Atualizar a ordem da planilha.
+### Google Apps Script
 
----
+O Apps Script é responsável pelas alterações na planilha.
 
-### Produzidas
+As ações atuais enviadas pelo sistema são:
 
-```text
-/api/fichas/produzidas
-```
+- `salvarSequencia`;
+- `produzidas`.
 
-Função:
+O código-fonte do Apps Script não está versionado neste repositório. As rotas do Next.js chamam o Web App publicado do Apps Script.
 
-Mover peças produzidas para histórico.
+## Observações de manutenção
 
----
-
-### Histórico
-
-```text
-/api/fichas/historico/6064
-```
-
-Função:
-
-Ler a aba:
-
-```text
-Historico_6064
-```
-
----
-
-# Estrutura da Planilha
-
-## Planilha Principal
-
-Nome:
-
-```text
-fichas_usinagem
-```
-
----
-
-## Aba 6064
-
-Campos:
-
-* Sequência
-* Desenho
-* Ordem mes
-* Descrição
-* Quantidade
-* Material
-* Dimensões
-* Ordem
-* Prazo
-* Observações
-
-Função:
-
-Fila ativa da máquina.
-
----
-
-## Aba Historico_6064
-
-Função:
-
-Armazenar peças produzidas.
-
-Contém:
-
-* Todos os dados da peça.
-* Data de produção.
-
----
-
-# Regras da Máquina 6064
-
-## Classificação de Setup
-
-### Morsa
-
-```text
-largura <= 400
-```
-
-### Mesa de Vácuo
-
-```text
-largura > 400
-```
-
----
-
-## Critérios de Priorização
-
-Ordem atual:
-
-1. Urgência
-2. Setup atual
-3. Prazo
-4. Largura
-
----
-
-## Conceito de Setup Atual
-
-O setup atual representa a condição real da máquina.
-
-Exemplo:
-
-```text
-Morsa
-```
-
-ou
-
-```text
-Mesa de vácuo
-```
-
-O sistema prioriza peças compatíveis com o setup atual.
-
----
-
-# Fluxo Operacional
-
-## Criar Sequência
-
-1. Alimentar a planilha.
-2. Entrar na máquina.
-3. Definir setup atual.
-4. Criar sequência.
-
-Resultado:
-
-Fila otimizada automaticamente.
-
----
-
-## Editar Sequência
-
-Permite:
-
-* Reordenar peças.
-* Tratar urgências.
-* Ajustar fila manualmente.
-
----
-
-## Ver Sequência
-
-Permite:
-
-* Consultar fila ativa.
-* Selecionar produzidas.
-
-Não permite:
-
-* Alterar setup.
-* Alterar sequência.
-
----
-
-## Marcar Produzidas
-
-Ao marcar produzidas:
-
-1. Remove da aba 6064.
-2. Move para Historico_6064.
-3. Atualiza contador de histórico.
-
----
-
-# Tratamento de Urgências
-
-## Estratégia Atual
-
-Urgências são tratadas manualmente.
-
-Fluxo:
-
-1. Inserir peça na planilha.
-2. Editar sequência.
-3. Arrastar para posição desejada.
-4. Salvar.
-
----
-
-## Motivo
-
-Urgências são exceções.
-
-Recalcular toda a fila pode gerar novos atrasos.
-
-A decisão operacional humana mostrou-se mais eficiente.
-
----
-
-# Decisões Tomadas
-
-## Funcionalidade Removida
-
-### Forçar prioridade de setup
-
-Status:
-
-REMOVIDA
-
-Descrição:
-
-Permitia forçar:
-
-* Morsa
-* Mesa de vácuo
-
-Motivo da remoção:
-
-Durante uso real verificou-se que:
-
-* Urgências são raras.
-* O ajuste manual resolve melhor.
-* A funcionalidade aumentava a complexidade.
-* Poderia gerar replanejamentos desnecessários.
-
-Conclusão:
-
-A edição manual é suficiente.
-
----
-
-# Lições Aprendidas
-
-Durante os primeiros dias de uso:
-
-* Operadores conseguem seguir a sequência.
-* A lógica de setup está funcionando.
-* A edição manual resolve exceções.
-* Histórico deve ficar persistido na planilha.
-* Menos automação é melhor quando a exceção é rara.
-* O sistema deve auxiliar a decisão, não substituir o planejador.
-
----
-
-# Estratégia de Hospedagem
-
-Situação atual:
-
-Não hospedado.
-
-Motivo:
-
-Contém informações internas da empresa.
-
-Antes de publicar avaliar:
-
-* Aprovação da empresa.
-* Aprovação do TI.
-* Estratégia de segurança.
-
----
-
-# Expansão Futura
-
-## Segunda Máquina
-
-Possível candidato:
-
-```text
-Torno
-```
-
-Importante:
-
-Cada máquina possui regras próprias.
-
-A interface pode ser reaproveitada.
-
-As regras de sequenciamento deverão ser específicas por máquina.
-
----
-
-# Ideias Futuras
-
-## Capacidade x Demanda
-
-Possibilidade futura:
-
-Utilizar:
-
-* Tempo padrão.
-* Tempo de setup.
-* Capacidade diária.
-
-Para calcular:
-
-* Ocupação.
-* Gargalos.
-* Atrasos.
-* Capacidade disponível.
-
----
-
-## APS Simplificado
-
-Futuro possível:
-
-Planejamento automático entre múltiplas máquinas.
-
----
-
-# GitHub
-
-Repositório:
-
-```text
-fichas_usinagem
-```
-
-Estratégia:
-
-Toda alteração relevante deve ser:
-
-```bash
-git add .
-git commit -m "descricao"
-git push
-```
-
----
-
-# Responsável
-
-Ricardo Poerschke
-
-Projeto em evolução contínua baseado em uso real no chão de fábrica.
-
-
-
-Ajuste Feito no dia 31/05/26
-
-# Sequenciador de Produção
-
-## Objetivo
-
-Sistema web para sequenciamento de produção de máquinas CNC, desenvolvido em Next.js.
-
-O sistema foi criado inicialmente para a máquina 6064 (Deckel), com foco em:
-
-* Redução de trocas de setup
-* Priorização por prazo
-* Tratamento de peças urgentes
-* Controle visual da fila
-* Histórico de produção
-* Persistência da sequência
-
----
-
-## Máquina Atual
-
-### 6064 - Deckel
-
-Tipo:
-
-* Fresadora CNC
-
-Material predominante:
-
-* Alumínio
-
-Setup disponíveis:
-
-* Morsa
-* Mesa de vácuo
-
----
-
-## Fluxo Operacional Atual
-
-### Criar Sequência
-
-1. Ler aba 6064 da planilha.
-2. Gerar sequência automática.
-3. Abrir tela de edição.
-4. Validar resultado.
-5. Salvar sequência.
-
----
-
-### Editar Sequência
-
-Permite:
-
-* Alterar ordem das peças
-* Ajustar urgências
-* Mover itens por drag and drop
-* Alterar setup considerado
-
----
-
-### Ver Sequência
-
-Permite:
-
-* Visualizar fila ativa
-* Consultar setup considerado
-* Selecionar peças produzidas
-* Marcar produzidas
-
-Não permite:
-
-* Editar sequência
-* Alterar setup
-* Salvar sequência
-
----
-
-### Histórico
-
-Permite:
-
-* Consultar peças produzidas
-* Consultar data de produção
-* Consultar histórico real da máquina
-
----
-
-## Estrutura da Planilha
-
-### Aba 6064
-
-Fila ativa da máquina.
-
-### Aba Historico_6064
-
-Peças produzidas.
-
-Campos armazenados:
-
-* Desenho
-* Descrição
-* Quantidade
-* Material
-* Dimensões
-* Ordem
-* Prazo
-* Observações
-* Data de produção
-
----
-
-## Arquitetura
-
-### Frontend
-
-Arquivo principal:
-
-```text
-app/page.tsx
-```
-
----
-
-### APIs
-
-#### Leitura da fila
-
-```text
-app/api/fichas/6064/route.ts
-```
-
----
-
-#### Salvar sequência
-
-```text
-app/api/fichas/salvar/route.ts
-```
-
----
-
-#### Produzidas
-
-```text
-app/api/fichas/produzidas/route.ts
-```
-
----
-
-#### Histórico
-
-```text
-app/api/fichas/historico/6064/route.ts
-```
-
----
-
-## Regra de Sequenciamento da 6064
-
-### Hierarquia Principal
-
-1. Prazo
-2. Conjunto/Família
-3. Largura
-4. Setup
-
----
-
-### Prazo
-
-Principal critério de decisão.
-
-Objetivo:
-
-* Evitar atrasos
-* Garantir cumprimento de entrega
-
----
-
-### Conjunto/Família
-
-Sempre que possível, peças relacionadas devem ser produzidas em sequência.
-
-Exemplos:
-
-* Mesma OF
-* Mesmo projeto
-* Mesma ferramenta
-* Mesma referência
-
-Objetivos:
-
-* Aproveitar preparação
-* Reduzir movimentação
-* Facilitar conferência
-
----
-
-### Largura
-
-Dentro de um conjunto, considerar a largura das peças.
-
-Lógica operacional:
-
-* Setup Morsa → menor para maior
-* Setup Mesa de vácuo → maior para menor
-
-Objetivo:
-
-* Facilitar preparação
-* Reduzir ajustes
-
----
-
-### Setup
-
-Setup é considerado, porém não possui prioridade absoluta.
-
-Objetivo:
-
-* Reduzir trocas
-* Melhorar produtividade
-
----
-
-### Regra dos Dois Dias
-
-O setup pode ser priorizado desde que isso não gere atraso superior a dois dias.
-
-Exemplo:
-
-Peça A:
-
-* Prazo 08/10
-* Setup Morsa
-
-Peça B:
-
-* Prazo 07/10
-* Setup Mesa de vácuo
-
-Decisão:
-
-Manter setup atual.
-
----
-
-Exemplo:
-
-Peça A:
-
-* Prazo 08/10
-* Setup Morsa
-
-Peça B:
-
-* Prazo 05/10
-* Setup Mesa de vácuo
-
-Decisão:
-
-Priorizar prazo.
-
----
-
-## Funcionalidades Implementadas
-
-### Sequenciamento
-
-* Sequenciamento automático
-* Agrupamento por conjunto
-* Consideração de setup
-* Consideração de prazo
-
-### Edição
-
-* Drag and drop
-* Auto-scroll
-
-### Integração
-
-* Google Sheets
-* Apps Script
-
-### Persistência
-
-* Salvar sequência
-* Histórico permanente
-
-### Controle
-
-* Produzidas
-* Histórico
-* Contadores
-
----
-
-## Funcionalidades Removidas
-
-### Forçar prioridade de setup
-
-Status:
-
-Removida
-
-Motivo:
-
-Urgências são melhor tratadas através da edição manual da sequência.
-
-A funcionalidade aumentava a complexidade sem benefício operacional relevante.
-
----
-
-## Problemas Encontrados em Uso Real
-
-### Botão salvar sequência em Ver sequência
-
-Status:
-
-Corrigido
-
----
-
-### Auto-scroll ausente
-
-Status:
-
-Corrigido
-
----
-
-### Histórico apenas local
-
-Status:
-
-Corrigido
-
-Solução:
-
-Histórico persistido na planilha.
-
----
-
-### Forçar prioridade de setup
-
-Status:
-
-Removido
-
----
-
-## Próximas Etapas
-
-### Fase 1 - Consolidação da 6064
-
-* Continuar validação operacional
-* Refinamentos de interface
-* Refinamentos de usabilidade
-* Hospedagem
-
----
-
-### Fase 2 - Expansão
-
-Possíveis máquinas:
-
-* Torno CNC
-* Outras fresadoras CNC
-
-Cada máquina possuirá regras próprias de decisão.
-
----
-
-## Ideias Futuras
-
-### Capacidade x Demanda
-
-Considerar:
-
-* Tempo padrão
-* Tempo de setup
-* Capacidade diária
-
-Objetivos:
-
-* Medir ocupação
-* Identificar gargalos
-* Apoiar planejamento
-
----
-
-### APS Simplificado
-
-Possível evolução futura para planejamento integrado entre máquinas.
-
----
-
-## Histórico do Projeto
-
-Projeto desenvolvido e refinado através de uso real em produção.
-
-Todas as regras atuais foram validadas operacionalmente antes de serem implementadas.
+- A regra de cada máquina deve permanecer isolada em `sequencing/sequenciarXXXX.ts`.
+- O cadastro da máquina deve permanecer centralizado em `lib/machines`.
+- As rotas de leitura devem seguir o padrão já existente por máquina.
+- O fluxo de salvamento deve continuar usando `/api/fichas/salvar`.
+- Alterações no Apps Script devem ser acompanhadas de nova implantação do Web App.
