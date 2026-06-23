@@ -2,17 +2,26 @@ import type { Peca } from "@/types/peca";
 import {
   normalizarTexto,
   prazoInternoTimestamp,
-  prioridadeProcessoAdicional,
-  prioridadeUrgenciaProdutiva,
-  temProcessoAdicional,
 } from "./regrasFluxoProdutivo";
 
 type Peca1572 = Peca & {
   ferramentaSequenciamento: number;
 };
 
+type GrupoOrdem1572 = {
+  prazo: number;
+  ordem: string;
+};
+
 const LIMITE_PECAS_PARA_SUBIR_FERRAMENTA = 2;
 const DIAS_ANTECIPACAO_1572 = 20;
+const PROCESSOS_EXTERNOS_1572 = [
+  "tempera",
+  "solda",
+  "oxidacao",
+  "revestimento",
+  "tratamento",
+];
 
 function extrairNumeros(dimensoes?: string) {
   return (
@@ -42,11 +51,6 @@ function getPrazoInternoTimestamp(peca: Peca) {
   return prazoInternoTimestamp(peca.prazo, DIAS_ANTECIPACAO_1572);
 }
 
-function isInox304(peca: Peca) {
-  const material = normalizarTexto(peca.material);
-  return material.includes("inox") && material.includes("304");
-}
-
 function getGrupoComprimento(peca: Peca) {
   const { comprimento } = getMedidas(peca);
   return comprimento > 225 ? 1 : 0;
@@ -69,9 +73,9 @@ function getQuantidade(peca: Peca) {
 
 function getChaveGrupo(peca: Peca) {
   return [
-    prioridadeUrgenciaProdutiva(peca, DIAS_ANTECIPACAO_1572),
-    temProcessoAdicional(peca) ? "processo-adicional" : "normal",
+    temProcessoExterno1572(peca) ? "processo-externo" : "normal",
     getPrazoInternoTimestamp(peca),
+    normalizarTexto(peca.ordem),
     getGrupoComprimento(peca),
   ].join("|");
 }
@@ -145,34 +149,83 @@ function compararTexto(a?: string, b?: string) {
   return (a ?? "").localeCompare(b ?? "");
 }
 
+function temProcessoExterno1572(peca: Peca) {
+  const texto = normalizarTexto(
+    [
+      peca.descricao,
+      peca.observacoes,
+      peca.material,
+      peca.ordem,
+      peca.ordemMes,
+    ].join(" ")
+  );
+
+  return PROCESSOS_EXTERNOS_1572.some((processo) => texto.includes(processo));
+}
+
+function prioridadeProcessoExterno1572(peca: Peca) {
+  return temProcessoExterno1572(peca) ? 0 : 1;
+}
+
+function getChaveOrdem(peca: Peca) {
+  return normalizarTexto(peca.ordem);
+}
+
+function criarGruposOrdem(pecas: Peca1572[]) {
+  const grupos = new Map<string, GrupoOrdem1572>();
+  const chaves = new WeakMap<Peca1572, string>();
+
+  pecas.forEach((peca, index) => {
+    const ordem = getChaveOrdem(peca);
+    const chave = ordem || `sem-ordem-${index}`;
+    const prazo = getPrazoInternoTimestamp(peca);
+    const grupoExistente = grupos.get(chave);
+
+    chaves.set(peca, chave);
+
+    if (!grupoExistente) {
+      grupos.set(chave, { prazo, ordem: ordem || chave });
+      return;
+    }
+
+    grupoExistente.prazo = Math.min(grupoExistente.prazo, prazo);
+  });
+
+  return { grupos, chaves };
+}
+
 export function sequenciar1572(pecas: Peca[]) {
   const pecasComFerramenta = ajustarFerramentaPorQuantidade(pecas);
+  const gruposOrdem = criarGruposOrdem(pecasComFerramenta);
 
   return [...pecasComFerramenta].sort((a, b) => {
-    const urgenciaA = prioridadeUrgenciaProdutiva(a, DIAS_ANTECIPACAO_1572);
-    const urgenciaB = prioridadeUrgenciaProdutiva(b, DIAS_ANTECIPACAO_1572);
+    const grupoOrdemA = gruposOrdem.grupos.get(gruposOrdem.chaves.get(a)!);
+    const grupoOrdemB = gruposOrdem.grupos.get(gruposOrdem.chaves.get(b)!);
 
-    if (urgenciaA !== urgenciaB) return urgenciaA - urgenciaB;
+    if (!grupoOrdemA || !grupoOrdemB) return 0;
 
-    const processoA = prioridadeProcessoAdicional(a);
-    const processoB = prioridadeProcessoAdicional(b);
+    if (grupoOrdemA.prazo !== grupoOrdemB.prazo) {
+      return grupoOrdemA.prazo - grupoOrdemB.prazo;
+    }
+
+    if (grupoOrdemA.ordem !== grupoOrdemB.ordem) {
+      return grupoOrdemA.ordem.localeCompare(grupoOrdemB.ordem);
+    }
+
+    const processoA = prioridadeProcessoExterno1572(a);
+    const processoB = prioridadeProcessoExterno1572(b);
 
     if (processoA !== processoB) return processoA - processoB;
-
-    const prazoA = getPrazoInternoTimestamp(a);
-    const prazoB = getPrazoInternoTimestamp(b);
-
-    if (prazoA !== prazoB) return prazoA - prazoB;
-
-    if (a.ferramentaSequenciamento !== b.ferramentaSequenciamento) {
-      return a.ferramentaSequenciamento - b.ferramentaSequenciamento;
-    }
 
     const grupoComprimentoA = getGrupoComprimento(a);
     const grupoComprimentoB = getGrupoComprimento(b);
 
     if (grupoComprimentoA !== grupoComprimentoB) {
       return grupoComprimentoA - grupoComprimentoB;
+    }
+
+    if (a.ferramentaSequenciamento !== b.ferramentaSequenciamento) {
+      return a.ferramentaSequenciamento - b.ferramentaSequenciamento;
     }
 
     const medidasA = getMedidas(a);
@@ -195,11 +248,6 @@ export function sequenciar1572(pecas: Peca[]) {
     if (medidasA.comprimento !== medidasB.comprimento) {
       return medidasA.comprimento - medidasB.comprimento;
     }
-
-    const inoxA = isInox304(a) ? 0 : 1;
-    const inoxB = isInox304(b) ? 0 : 1;
-
-    if (inoxA !== inoxB) return inoxA - inoxB;
 
     const comparacaoMaterial = compararTexto(a.material, b.material);
     if (comparacaoMaterial !== 0) return comparacaoMaterial;

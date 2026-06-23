@@ -38,11 +38,6 @@ function extrairMedidas(dimensoes?: string) {
   };
 }
 
-function quantidadePecas(peca: Peca): number {
-  const quantidade = Number(String(peca.quantidade ?? "").replace(",", "."));
-  return Number.isNaN(quantidade) ? 1 : quantidade;
-}
-
 function cabeNaFerramenta(
   largura: number,
   espessura: number,
@@ -63,7 +58,7 @@ function grupoPrazo(peca: Peca): number {
   return prazoInternoTimestamp(peca.prazo, DIAS_ANTECIPACAO_1516);
 }
 
-function ordenarPorBase(a: Peca, b: Peca): number {
+function ordenar1516(a: Peca, b: Peca): number {
   const urgenteA = prioridadeUrgenciaProdutiva(a, DIAS_ANTECIPACAO_1516);
   const urgenteB = prioridadeUrgenciaProdutiva(b, DIAS_ANTECIPACAO_1516);
 
@@ -79,10 +74,11 @@ function ordenarPorBase(a: Peca, b: Peca): number {
 
   if (prazoA !== prazoB) return prazoA - prazoB;
 
-  return 0;
-}
+  const ferramentaA = ferramentaMinima1516(a);
+  const ferramentaB = ferramentaMinima1516(b);
 
-function ordenarDentroFerramenta(a: Peca, b: Peca): number {
+  if (ferramentaA !== ferramentaB) return ferramentaA - ferramentaB;
+
   const medidasA = extrairMedidas(a.dimensoes);
   const medidasB = extrairMedidas(b.dimensoes);
 
@@ -93,105 +89,11 @@ function ordenarDentroFerramenta(a: Peca, b: Peca): number {
   const materialA = normalizarTexto(a.material);
   const materialB = normalizarTexto(b.material);
 
-  if (materialA !== materialB) {
-    return materialA.localeCompare(materialB);
-  }
-
-  return 0;
-}
-
-function sequenciarGrupoMesmoPrazo(pecas: Peca[]): Peca[] {
-  const pequenas63: Peca[] = [];
-  const medias100: Peca[] = [];
-  const grandes125: Peca[] = [];
-
-  for (const peca of pecas) {
-    const ferramenta = ferramentaMinima1516(peca);
-
-    if (ferramenta === 63) pequenas63.push(peca);
-    else if (ferramenta === 100) medias100.push(peca);
-    else grandes125.push(peca);
-  }
-
-  pequenas63.sort(ordenarDentroFerramenta);
-  medias100.sort(ordenarDentroFerramenta);
-  grandes125.sort(ordenarDentroFerramenta);
-
-  const resultado: Peca[] = [];
-
-  if (grandes125.length > 0) {
-    resultado.push(...grandes125);
-    resultado.push(...medias100);
-
-    let quantidade63Puxada = 0;
-    const pequenasRestantes: Peca[] = [];
-
-    for (const peca of pequenas63) {
-      const qtd = quantidadePecas(peca);
-
-      if (quantidade63Puxada + qtd <= 10) {
-        resultado.push(peca);
-        quantidade63Puxada += qtd;
-      } else {
-        pequenasRestantes.push(peca);
-      }
-    }
-
-    resultado.push(...pequenasRestantes);
-    return resultado;
-  }
-
-  if (medias100.length > 0) {
-    resultado.push(...medias100);
-
-    let quantidade63Puxada = 0;
-    const pequenasRestantes: Peca[] = [];
-
-    for (const peca of pequenas63) {
-      const qtd = quantidadePecas(peca);
-
-      if (quantidade63Puxada + qtd <= 10) {
-        resultado.push(peca);
-        quantidade63Puxada += qtd;
-      } else {
-        pequenasRestantes.push(peca);
-      }
-    }
-
-    resultado.push(...pequenasRestantes);
-    return resultado;
-  }
-
-  resultado.push(...pequenas63);
-  return resultado;
+  return materialA.localeCompare(materialB);
 }
 
 export function sequenciar1516(pecas: Peca[]): Peca[] {
-  const pecasOrdenadas = [...pecas].sort(ordenarPorBase);
-
-  const grupos = new Map<string, Peca[]>();
-
-  for (const peca of pecasOrdenadas) {
-    const chave = [
-      prioridadeUrgenciaProdutiva(peca, DIAS_ANTECIPACAO_1516),
-      prioridadeProcessoAdicional(peca),
-      grupoPrazo(peca),
-    ].join("-");
-
-    if (!grupos.has(chave)) {
-      grupos.set(chave, []);
-    }
-
-    grupos.get(chave)!.push(peca);
-  }
-
-  const resultado: Peca[] = [];
-
-  for (const grupo of grupos.values()) {
-    resultado.push(...sequenciarGrupoMesmoPrazo(grupo));
-  }
-
-  return resultado.map((peca, index) => ({
+  return [...pecas].sort(ordenar1516).map((peca, index) => ({
     ...peca,
     sequencia: index + 1,
   }));
