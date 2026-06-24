@@ -1,14 +1,11 @@
 "use client";
 
 import React, { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import Image from "next/image";
 import type { Peca } from "@/types/peca";
 import { machine6064 } from "@/lib/machines/6064";
 import { machines } from "@/lib/machines";
 import { sequencingStrategies } from "@/sequencing";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
 import { ActionCard } from "@/components/ui/ActionCard";
 import { MachineCard } from "@/components/MachineCard";
 import {
@@ -44,16 +41,7 @@ type Pagina =
   | "editarSequencia"
   | "historico";
 type Setup = "morsa" | "vacuo";
-type SetupForcado = "nenhum" | Setup;
 type Tema = "dark" | "light";
-
-type ButtonProps = {
-  children: React.ReactNode;
-  className?: string;
-  variant?: "default" | "outline";
-  disabled?: boolean;
-  onClick?: () => void;
-};
 
 const ordemVisualMaquinas = ["6064", "1572", "725", "5825", "1516"];
 
@@ -517,53 +505,89 @@ export default function Sequenciador6064() {
 
   if (pagina === "historico") {
     return (
-      <div className="min-h-screen bg-slate-100 p-6">
-        <div className="mx-auto max-w-6xl space-y-6">
-          <Button variant="outline" onClick={() => setPagina("maquina")} className="gap-2">
-            <ArrowLeft size={18} /> Voltar
-          </Button>
+      <div
+        className="machine-workspace flow-workspace"
+        data-machine={maquinaSelecionada.id}
+      >
+        <div className="machine-workspace__topbar">
+          <button
+            type="button"
+            onClick={() => setPagina("maquina")}
+            className="machine-back-button"
+          >
+            <ArrowLeft size={19} />
+            Voltar
+          </button>
 
-          <Card className="rounded-2xl shadow-md">
-            <CardContent className="p-6">
-              <h1 className="text-3xl font-bold">Histórico - {maquina.numero} {maquina.nome}</h1>
-              <p className="mt-2 text-slate-600">Consulta das peças já produzidas, com data de sequenciamento e data de conclusão.</p>
-            </CardContent>
-          </Card>
+          <Image
+            src="/tramontina-logo.png"
+            alt="Tramontina"
+            width={1831}
+            height={281}
+            className="machine-workspace__logo"
+          />
+        </div>
+
+        <main className="machine-workspace__content flow-workspace__content">
+          <header className="flow-header">
+            <div>
+              <span className="flow-header__eyebrow">Registros concluídos</span>
+              <h1>Histórico - {maquina.numero} {maquina.nome}</h1>
+              <p>Consulta das peças já produzidas, com data de sequenciamento e data de conclusão.</p>
+            </div>
+
+            <div className="flow-header__summary">
+              <span>Produzidas no histórico</span>
+              <strong>{historico.length}</strong>
+            </div>
+          </header>
 
           {historico.length === 0 ? (
-            <div className="rounded-2xl bg-white p-6 text-center text-slate-500 shadow-sm">
+            <div className="flow-empty-state">
+              <span className="flow-empty-state__icon">
+                <History size={29} />
+              </span>
               Nenhuma peça produzida registrada no histórico.
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className="history-list">
               {historico.map((peca, index) => (
-                <div key={`${peca.desenho}-hist-${index}`} className="rounded-2xl bg-white p-4 shadow-sm">
-                  <div className="grid gap-3 md:grid-cols-[1fr_150px_150px_120px] md:items-center">
+                <div
+                  key={`${peca.desenho}-hist-${index}`}
+                  className="history-card"
+                >
+                  <span className="history-card__index">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+
+                  <div className="history-card__identity">
+                    <span>Peça produzida</span>
+                    <h2>{peca.desenho} - {peca.descricao}</h2>
+                  </div>
+
+                  <div className="history-card__metadata">
                     <div>
-                      <p className="text-lg font-bold">{peca.desenho} - {peca.descricao}</p>
+                      <span>Sequenciado em</span>
+                      <strong>{peca.dataSequenciamento || "—"}</strong>
                     </div>
                     <div>
-                      <p className="text-sm text-slate-500">Sequenciado em</p>
-                      <p className="font-semibold">{peca.dataSequenciamento || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-500">Produzido em</p>
-                      <p className="font-semibold">{peca.dataProduzido}</p>
+                      <span>Produzido em</span>
+                      <strong>{peca.dataProduzido}</strong>
                     </div>
                     {usaSetupMorsaVacuo(maquinaSelecionada.id) && (
                       <div>
-                        <p className="text-sm text-slate-500">Setup</p>
-
-                        <p
-                          className={`font-semibold ${getSetupLabel(peca) === "Morsa"
-                            ? "text-blue-600"
-                            : "text-green-600"
-                            }`}
+                        <span>Setup</span>
+                        <strong
+                          className={`history-card__setup ${
+                            getSetupLabel(peca) === "Morsa"
+                              ? "is-morsa"
+                              : "is-vacuo"
+                          }`}
                         >
                           {getSetupLabel(peca) === "Morsa"
                             ? "🔵 Morsa"
                             : "🟢 Vácuo"}
-                        </p>
+                        </strong>
                       </div>
                     )}
                   </div>
@@ -571,7 +595,11 @@ export default function Sequenciador6064() {
               ))}
             </div>
           )}
-        </div>
+
+          <footer className="dashboard-footer">
+            © 2026 Tramontina · Fichas de Usinagem
+          </footer>
+        </main>
       </div>
     );
   }
@@ -588,78 +616,97 @@ export default function Sequenciador6064() {
       return acc;
     }, {});
     return (
-      <div className="min-h-screen bg-slate-100 p-6">
-        <div className="mx-auto max-w-6xl space-y-6">
-          <Button variant="outline" onClick={() => setPagina("maquina")} className="gap-2">
-            <ArrowLeft size={18} /> Voltar
-          </Button>
+      <div
+        className="machine-workspace flow-workspace"
+        data-machine={maquinaSelecionada.id}
+      >
+        <div className="machine-workspace__topbar">
+          <button
+            type="button"
+            onClick={() => setPagina("maquina")}
+            className="machine-back-button"
+          >
+            <ArrowLeft size={19} />
+            Voltar
+          </button>
 
-          <Card className="sticky top-4 z-50 rounded-2xl shadow-md">
-            <CardContent className="p-6">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <h1 className="text-3xl font-bold">
-                    {modoEdicao
-                      ? `Editar sequência - ${maquina.numero} ${maquina.nome}`
-                      : `Ver sequência - ${maquina.numero} ${maquina.nome}`}
-                  </h1>
-                  <p className="mt-2 text-slate-600">
-                    {modoEdicao
-                      ? "Arraste uma peça para cima ou para baixo para ajustar a ordem manualmente."
-                      : "Modo de produção. Selecione os itens finalizados para enviar ao histórico."}
-                  </p>
-                </div>
-                <div className="rounded-2xl bg-white px-5 py-4 shadow-sm border">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <Image
+            src="/tramontina-logo.png"
+            alt="Tramontina"
+            width={1831}
+            height={281}
+            className="machine-workspace__logo"
+          />
+        </div>
 
-                    {usaSetupMorsaVacuo(maquinaSelecionada.id) && (
-                      <div>
-                        <p className="text-sm text-slate-500">
-                          Setup considerado na sequência
-                        </p>
+        <main className="machine-workspace__content flow-workspace__content">
+          <header className="sequence-header">
+            <div className="sequence-header__identity">
+              <span className="flow-header__eyebrow">
+                {modoEdicao ? "Organização da produção" : "Modo de produção"}
+              </span>
+              <h1>
+                {modoEdicao
+                  ? `Editar sequência - ${maquina.numero} ${maquina.nome}`
+                  : `Ver sequência - ${maquina.numero} ${maquina.nome}`}
+              </h1>
+              <p>
+                {modoEdicao
+                  ? "Arraste uma peça para cima ou para baixo para ajustar a ordem manualmente."
+                  : "Modo de produção. Selecione os itens finalizados para enviar ao histórico."}
+              </p>
+            </div>
 
-                        <p className="text-2xl font-bold mt-1">
-                          {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}
-                        </p>
-                      </div>
-                    )}
-
-
-                  </div>
-
-                  {modoEdicao && (
-                    <Button
-                      onClick={salvarSequencia}
-                      className="gap-2"
-                      variant="outline"
-                    >
-                      Salvar sequência
-                    </Button>
-                  )}
-
-                  {!modoEdicao && (
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        onClick={imprimirSequencia}
-                        className="gap-2"
-                        variant="outline"
-                      >
-                        <Printer size={18} /> Imprimir sequência
-                      </Button>
-
-                      <Button
-                        onClick={marcarProduzidas}
-                        disabled={selecionadas.length === 0}
-                        className="gap-2"
-                      >
-                        <CheckCircle2 size={18} /> Marcar produzidas ({selecionadas.length})
-                      </Button>
-                    </div>
-                  )}
-                </div>
+            <div className="sequence-header__controls">
+              <div className="sequence-header__status">
+                <span>Peças pendentes</span>
+                <strong>{sequencia.length}</strong>
               </div>
-            </CardContent>
-          </Card>
+
+              {usaSetupMorsaVacuo(maquinaSelecionada.id) && (
+                <div className="sequence-header__setup">
+                  <span>Setup considerado na sequência</span>
+                  <strong>
+                    {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}
+                  </strong>
+                </div>
+              )}
+
+              {modoEdicao && (
+                <button
+                  type="button"
+                  onClick={salvarSequencia}
+                  className="flow-button is-primary"
+                >
+                  <ListChecks size={18} />
+                  Salvar sequência
+                </button>
+              )}
+
+              {!modoEdicao && (
+                <div className="sequence-header__actions">
+                  <button
+                    type="button"
+                    onClick={imprimirSequencia}
+                    className="flow-button is-secondary"
+                  >
+                    <Printer size={18} />
+                    Imprimir sequência
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={marcarProduzidas}
+                    disabled={selecionadas.length === 0}
+                    className="flow-button is-primary"
+                  >
+                    <CheckCircle2 size={18} />
+                    Marcar produzidas ({selecionadas.length})
+                  </button>
+                </div>
+              )}
+            </div>
+          </header>
 
           <div className="print-header hidden">
             <h1>Sequência {maquina.numero} - {maquina.nome}</h1>
@@ -696,7 +743,7 @@ export default function Sequenciador6064() {
             ))}
           </div>
 
-          <div className="print-area space-y-3">
+          <div className="print-area sequence-list">
             {sequencia.map((peca, index) => {
               const trocaSetup =
                 usaSetupMorsaVacuo(maquinaSelecionada.id) &&
@@ -707,7 +754,7 @@ export default function Sequenciador6064() {
               return (
                 <React.Fragment key={`${peca.desenho}-${index}`}>
                   {trocaSetup && (
-                    <div className="rounded-2xl border border-dashed border-slate-400 bg-slate-200 p-3 text-center font-semibold text-slate-700">
+                    <div className="sequence-setup-divider">
                       Trocar setup para {getSetupLabel(peca)}
                     </div>
                   )}
@@ -735,53 +782,65 @@ export default function Sequenciador6064() {
                     }
                     onDrop={modoEdicao ? () => moverItem(dragIndex, index) : undefined}
                     onDragEnd={modoEdicao ? () => setDragIndex(null) : undefined}
-                    className={`rounded-2xl p-4 shadow-sm transition ${selecionada ? "bg-green-50 ring-2 ring-green-400" : "bg-white"} ${modoEdicao ? "cursor-move hover:shadow-md" : "cursor-default"}`}
+                    className={`sequence-item ${
+                      selecionada ? "is-selected" : ""
+                    } ${modoEdicao ? "is-draggable" : ""}`}
                   >
-                    <div className="grid gap-3 md:grid-cols-[60px_40px_1fr_160px_120px_130px] md:items-center">
-                      <div className="text-2xl font-bold text-slate-700">{index + 1}</div>
-                      <GripVertical className={modoEdicao ? "text-slate-400" : "text-slate-200"} />
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-lg font-bold">{peca.desenho} - {peca.descricao}</p>
+                    <div className="sequence-item__layout">
+                      <div className="sequence-item__order">
+                        {String(index + 1).padStart(2, "0")}
+                      </div>
+
+                      <div className="sequence-item__drag">
+                        <GripVertical />
+                      </div>
+
+                      <div className="sequence-item__identity">
+                        <div className="sequence-item__title">
+                          <h2>{peca.desenho} - {peca.descricao}</h2>
                           {peca.urgente && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-700">
-                              <AlertTriangle size={15} /> Urgente
+                            <span className="sequence-item__urgent">
+                              <AlertTriangle size={14} />
+                              Urgente
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-slate-600">Dimensões: {peca.dimensoes}</p>
+                        <p>Dimensões: {peca.dimensoes}</p>
                         {peca.ordem &&
                           contagemOF[peca.ordem] > 1 &&
                           peca.ordem !== "-" &&
                           peca.ordem !== "Sem OF" && (
-                            <span className="mt-2 inline-flex w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                            <span className="sequence-item__of">
                               OF {peca.ordem}
                             </span>
                           )}
                       </div>
-                      <div>
-                        <p className="text-sm text-slate-500">Prazo</p>
-                        <p className="font-semibold">{peca.prazo}</p>
-                      </div>
-                      {usaSetupMorsaVacuo(maquinaSelecionada.id) && (
-                        <div>
-                          <p className="text-sm text-slate-500">Setup</p>
 
-                          <p
-                            className={`font-semibold ${getSetupLabel(peca) === "Morsa"
-                                ? "text-blue-600"
-                                : "text-green-600"
-                              }`}
+                      <div className="sequence-item__meta">
+                        <span>Prazo</span>
+                        <strong>{peca.prazo}</strong>
+                      </div>
+
+                      {usaSetupMorsaVacuo(maquinaSelecionada.id) && (
+                        <div className="sequence-item__meta">
+                          <span>Setup</span>
+                          <strong
+                            className={`sequence-item__setup ${
+                              getSetupLabel(peca) === "Morsa"
+                                ? "is-morsa"
+                                : "is-vacuo"
+                            }`}
                           >
                             {getSetupLabel(peca) === "Morsa"
                               ? "🔵 Morsa"
                               : "🟢 Vácuo"}
-                          </p>
+                          </strong>
                         </div>
                       )}
-                      <div>
+
+                      <div className="sequence-item__control">
                         {!modoEdicao ? (
-                          <label className="flex cursor-pointer items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold">
+                          <label className="sequence-produced-check">
                             <input
                               type="checkbox"
                               checked={selecionada}
@@ -790,7 +849,9 @@ export default function Sequenciador6064() {
                             Produzida
                           </label>
                         ) : (
-                          <span className="text-sm text-slate-400">Edição ativa</span>
+                          <span className="sequence-editing-badge">
+                            Edição ativa
+                          </span>
                         )}
                       </div>
                     </div>
@@ -799,65 +860,141 @@ export default function Sequenciador6064() {
               );
             })}
           </div>
-        </div>
+
+          <footer className="dashboard-footer">
+            © 2026 Tramontina · Fichas de Usinagem
+          </footer>
+        </main>
       </div>
     );
   }
 
   if (pagina === "maquina") {
     return (
-      <div className="min-h-screen bg-slate-100 p-6">
-        <div className="mx-auto max-w-5xl space-y-6">
-          <Button variant="outline" onClick={() => setPagina("home")} className="gap-2">
-            <ArrowLeft size={18} /> Voltar
-          </Button>
+      <div
+        className="machine-workspace"
+        data-machine={maquinaSelecionada.id}
+      >
+        <div className="machine-workspace__topbar">
+          <button
+            type="button"
+            onClick={() => setPagina("home")}
+            className="machine-back-button"
+          >
+            <ArrowLeft size={19} />
+            Voltar
+          </button>
 
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
-            <Card className="rounded-2xl shadow-md">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <h1 className="text-3xl font-bold">Maq: {maquina.numero} {maquina.nome}</h1>
-                    <p className="mt-2 text-slate-600">{maquina.tipo} • Material padrão: {maquina.material}</p>
-                  </div>
-                  {usaSetupMorsaVacuo(maquinaSelecionada.id) && (
-                    <div className="rounded-2xl bg-slate-200 px-4 py-3 text-right">
-                      <p className="text-sm text-slate-500">Setup atual</p>
-                      <select
-                        value={setupAtual}
-                        onChange={(event) => setSetupAtual(event.target.value as Setup)}
-                        className="mt-1 rounded-xl border border-slate-300 bg-white px-3 py-2 text-lg font-semibold"
-                      >
-                        <option value="morsa">Morsa</option>
-                        <option value="vacuo">Mesa de vácuo</option>
-                      </select>
-                    </div>
-                  )}
-                </div>
-
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl bg-white p-4 shadow-sm">
-                    <p className="text-sm text-slate-500">Peças na fila</p>
-                    <p className="text-3xl font-bold">{maquina.fila}</p>
-                  </div>
-                  <div className="rounded-2xl bg-white p-4 shadow-sm">
-                    <p className="text-sm text-slate-500">Produzidas no histórico</p>
-                    <p className="text-3xl font-bold">{historico.length}</p>
-                  </div>
-                </div>
-
-              </CardContent>
-            </Card>
-          </motion.div>
-
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            <ActionCard icon={<PlusCircle />} title="Adicionar fichas" description="Enviar fotos ou importar da planilha." />
-            <ActionCard icon={<ListChecks />} title="Criar sequência" description="Gerar sugestão usando setup, urgência e prazo." onClick={criarSequencia} />
-            <ActionCard icon={<Edit3 />} title="Editar sequência" description="Arrastar peças para ajustar posição." onClick={() => setPagina("editarSequencia")} />
-            <ActionCard icon={<Eye />} title="Ver sequência" description="Selecionar produzidas e consultar fila." onClick={() => setPagina("verSequencia")} />
-            <ActionCard icon={<History />} title="Histórico" description="Consultar peças produzidas." onClick={() => setPagina("historico")} />
-          </div>
+          <Image
+            src="/tramontina-logo.png"
+            alt="Tramontina"
+            width={1831}
+            height={281}
+            className="machine-workspace__logo"
+          />
         </div>
+
+        <main className="machine-workspace__content">
+          <section
+            className={`machine-hero ${
+              usaSetupMorsaVacuo(maquinaSelecionada.id)
+                ? ""
+                : "without-setup"
+            }`}
+          >
+            <span className="machine-hero__glow" aria-hidden="true" />
+
+            <div className="machine-hero__identity">
+              <span className="machine-hero__eyebrow">
+                Máquina selecionada
+              </span>
+              <div className="machine-hero__title-line">
+                <span className="machine-hero__number">{maquina.numero}</span>
+                <div>
+                  <h1>{maquina.nome}</h1>
+                  <p>{maquina.tipo}</p>
+                </div>
+              </div>
+
+              <div className="machine-hero__details">
+                <span>
+                  Material padrão
+                  <strong>{maquina.material}</strong>
+                </span>
+                <span>
+                  Status
+                  <strong className="machine-hero__active">
+                    <i />
+                    Ativa
+                  </strong>
+                </span>
+              </div>
+            </div>
+
+            {usaSetupMorsaVacuo(maquinaSelecionada.id) && (
+              <div className="machine-setup-card">
+                <label htmlFor="setup-atual">Setup atual</label>
+                <p>Defina o setup usado no sequenciamento.</p>
+                <select
+                  id="setup-atual"
+                  value={setupAtual}
+                  onChange={(event) =>
+                    setSetupAtual(event.target.value as Setup)
+                  }
+                >
+                  <option value="morsa">Morsa</option>
+                  <option value="vacuo">Mesa de vácuo</option>
+                </select>
+              </div>
+            )}
+          </section>
+
+          <section className="machine-summary" aria-label="Resumo da máquina">
+            <div className="machine-summary__card">
+              <span className="machine-summary__icon is-blue">
+                <ListChecks size={27} />
+              </span>
+              <div>
+                <span>Peças na fila</span>
+                <strong>{maquina.fila}</strong>
+                <small>Aguardando produção</small>
+              </div>
+            </div>
+
+            <div className="machine-summary__card">
+              <span className="machine-summary__icon is-green">
+                <CheckCircle2 size={27} />
+              </span>
+              <div>
+                <span>Produzidas no histórico</span>
+                <strong>{historico.length}</strong>
+                <small>Registros concluídos</small>
+              </div>
+            </div>
+          </section>
+
+          <section className="machine-actions-section">
+            <div className="machine-actions-section__heading">
+              <div>
+                <span className="dashboard-eyebrow">Operações</span>
+                <h2>Ações da máquina</h2>
+              </div>
+              <p>Escolha uma opção para continuar.</p>
+            </div>
+
+            <div className="machine-actions-grid">
+              <ActionCard icon={<PlusCircle />} title="Adicionar fichas" description="Enviar fotos ou importar da planilha." />
+              <ActionCard icon={<ListChecks />} title="Criar sequência" description="Gerar sugestão usando setup, urgência e prazo." onClick={criarSequencia} />
+              <ActionCard icon={<Edit3 />} title="Editar sequência" description="Arrastar peças para ajustar posição." onClick={() => setPagina("editarSequencia")} />
+              <ActionCard icon={<Eye />} title="Ver sequência" description="Selecionar produzidas e consultar fila." onClick={() => setPagina("verSequencia")} />
+              <ActionCard icon={<History />} title="Histórico" description="Consultar peças produzidas." onClick={() => setPagina("historico")} />
+            </div>
+          </section>
+
+          <footer className="dashboard-footer">
+            © 2026 Tramontina · Fichas de Usinagem
+          </footer>
+        </main>
       </div>
     );
   }

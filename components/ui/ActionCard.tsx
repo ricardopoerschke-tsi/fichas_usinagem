@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { Card, CardContent } from "./Card";
+import { ArrowUpRight } from "lucide-react";
 
 type ActionCardProps = {
   icon: React.ReactElement<{ size?: number }>;
@@ -16,17 +16,24 @@ export function ActionCard({
   onClick,
 }: ActionCardProps) {
   return (
-    <motion.div whileHover={{ y: -4 }} onClick={onClick}>
-      <Card className="h-full cursor-pointer rounded-2xl shadow-md">
-        <CardContent className="flex h-full flex-col gap-3 p-5">
-          <div className="w-fit rounded-2xl bg-slate-200 p-3">
-            {React.cloneElement(icon, { size: 26 })}
-          </div>
+    <motion.div
+      whileHover={{ y: -4 }}
+      whileTap={onClick ? { scale: 0.99 } : undefined}
+      onClick={onClick}
+      className={`machine-action-card ${onClick ? "is-interactive" : ""}`}
+    >
+      <div className="machine-action-card__icon">
+        {React.cloneElement(icon, { size: 27 })}
+      </div>
 
-          <h3 className="text-lg font-bold">{title}</h3>
-          <p className="text-sm text-slate-600">{description}</p>
-        </CardContent>
-      </Card>
+      <div className="machine-action-card__content">
+        <h3>{title}</h3>
+        <p>{description}</p>
+      </div>
+
+      <span className="machine-action-card__arrow" aria-hidden="true">
+        <ArrowUpRight size={19} />
+      </span>
     </motion.div>
   );
 }
