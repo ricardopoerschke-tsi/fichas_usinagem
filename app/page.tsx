@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import type { Peca } from "@/types/peca";
 import { machine6064 } from "@/lib/machines/6064";
@@ -120,20 +120,11 @@ export default function Sequenciador6064() {
           };
         });
 
-        const sequenciador =
-          sequencingStrategies[
-          maquinaSelecionada.id as keyof typeof sequencingStrategies
-          ];
-
-        const convertidoSequenciado = sequenciador
-          ? sequenciador(convertido, setupAtual)
-          : convertido;
-
-        setSequencia(convertidoSequenciado);
+        setSequencia(convertido);
 
         setFilasPorMaquina((atual) => ({
           ...atual,
-          [maquinaSelecionada.id]: convertidoSequenciado.length,
+          [maquinaSelecionada.id]: convertido.length,
         }));
       } catch (error) {
         console.error("Erro ao carregar planilha:", error);
@@ -271,21 +262,16 @@ export default function Sequenciador6064() {
     );
   }
 
-  const sequenciaSugerida = useMemo(() => {
+  function criarSequencia() {
     const sequenciador =
       sequencingStrategies[
       maquinaSelecionada.id as keyof typeof sequencingStrategies
       ];
 
-    if (!sequenciador) {
-      return sequencia;
-    }
-
-    return sequenciador(sequencia, setupAtual);
-  }, [setupAtual, sequencia, maquinaSelecionada]);
-
-  function criarSequencia() {
     const hoje = formatarDataHoje();
+    const sequenciaSugerida = sequenciador
+      ? sequenciador(sequencia, setupAtual)
+      : sequencia;
     const novaSequencia = sequenciaSugerida.map((peca) => ({
       ...peca,
       dataSequenciamento: peca.dataSequenciamento || hoje,
