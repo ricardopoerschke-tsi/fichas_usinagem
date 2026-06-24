@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import type { Peca } from "@/types/peca";
 import { machine6064 } from "@/lib/machines/6064";
 import { machines } from "@/lib/machines";
@@ -11,8 +12,19 @@ import { Card, CardContent } from "@/components/ui/Card";
 import { ActionCard } from "@/components/ui/ActionCard";
 import { MachineCard } from "@/components/MachineCard";
 import {
+  Activity,
   ArrowLeft,
-  Factory,
+  ArrowUpRight,
+  Boxes,
+  ChartNoAxesColumnIncreasing,
+  CircleCheck,
+  Gauge,
+  Home,
+  LayoutGrid,
+  Moon,
+  Palette,
+  Settings,
+  Sun,
   ListChecks,
   Edit3,
   Eye,
@@ -24,9 +36,16 @@ import {
   Printer,
 } from "lucide-react";
 
-type Pagina = "home" | "maquina" | "verSequencia" | "editarSequencia" | "historico";
+type Pagina =
+  | "home"
+  | "configuracoes"
+  | "maquina"
+  | "verSequencia"
+  | "editarSequencia"
+  | "historico";
 type Setup = "morsa" | "vacuo";
 type SetupForcado = "nenhum" | Setup;
+type Tema = "dark" | "light";
 
 type ButtonProps = {
   children: React.ReactNode;
@@ -35,6 +54,8 @@ type ButtonProps = {
   disabled?: boolean;
   onClick?: () => void;
 };
+
+const ordemVisualMaquinas = ["6064", "1572", "725", "5825", "1516"];
 
 export default function Sequenciador6064() {
   const [pagina, setPagina] = useState<Pagina>("home");
@@ -45,6 +66,21 @@ export default function Sequenciador6064() {
   const [selecionadas, setSelecionadas] = useState<string[]>([]);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [filasPorMaquina, setFilasPorMaquina] = useState<Record<string, number>>({});
+  const [tema, setTema] = useState<Tema>("dark");
+
+  useEffect(() => {
+    try {
+      const temaSalvo = window.localStorage.getItem("fichas-usinagem-tema");
+      const temaInicial: Tema = temaSalvo === "light" ? "light" : "dark";
+
+      // A leitura ocorre uma única vez para refletir a preferência persistida.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTema(temaInicial);
+      document.documentElement.dataset.theme = temaInicial;
+    } catch {
+      document.documentElement.dataset.theme = "dark";
+    }
+  }, []);
 
   useEffect(() => {
     async function carregarFilasHome() {
@@ -152,6 +188,100 @@ export default function Sequenciador6064() {
     ...maquinaSelecionada,
     fila: sequencia.length,
   };
+
+  const maquinasHome = [...machines].sort(
+    (a, b) =>
+      ordemVisualMaquinas.indexOf(a.id) - ordemVisualMaquinas.indexOf(b.id)
+  );
+  const totalFila = machines.reduce(
+    (total, machine) => total + (filasPorMaquina[machine.id] ?? 0),
+    0
+  );
+  const maiorFila = machines.reduce(
+    (maior, machine) =>
+      (filasPorMaquina[machine.id] ?? 0) >
+      (filasPorMaquina[maior.id] ?? 0)
+        ? machine
+        : maior,
+    machines[0]
+  );
+  const maiorQuantidade = Math.max(
+    ...machines.map((machine) => filasPorMaquina[machine.id] ?? 0),
+    0
+  );
+  const mediaFila =
+    machines.length > 0 ? Math.round(totalFila / machines.length) : 0;
+
+  function aplicarTema(novoTema: Tema) {
+    setTema(novoTema);
+    document.documentElement.dataset.theme = novoTema;
+
+    try {
+      window.localStorage.setItem("fichas-usinagem-tema", novoTema);
+    } catch {
+      // O tema continua aplicado durante a sessão quando o armazenamento está indisponível.
+    }
+  }
+
+  function renderSidebar(ativo: "home" | "configuracoes") {
+    return (
+      <aside className="dashboard-sidebar">
+        <div className="dashboard-brand">
+          <Image
+            src="/tramontina-logo.png"
+            alt="Tramontina"
+            width={1831}
+            height={281}
+            priority
+            className="dashboard-brand__logo"
+          />
+        </div>
+
+        <nav className="dashboard-nav" aria-label="Navegação principal">
+          <button
+            type="button"
+            className={`dashboard-nav__item ${ativo === "home" ? "is-active" : ""}`}
+            onClick={() => setPagina("home")}
+          >
+            <Home size={20} strokeWidth={1.9} />
+            <span>Início</span>
+          </button>
+          <button
+            type="button"
+            className="dashboard-nav__item"
+            onClick={() => setPagina("home")}
+          >
+            <LayoutGrid size={20} strokeWidth={1.9} />
+            <span>Máquinas</span>
+          </button>
+          <button
+            type="button"
+            className={`dashboard-nav__item ${ativo === "configuracoes" ? "is-active" : ""}`}
+            onClick={() => setPagina("configuracoes")}
+          >
+            <Settings size={20} strokeWidth={1.9} />
+            <span>Configurações</span>
+          </button>
+        </nav>
+
+        <div className="dashboard-sidebar__flow">
+          <span>Fluxo disponível</span>
+          <p>
+            Selecione uma máquina para criar ou consultar sequências, histórico
+            e produzidas.
+          </p>
+        </div>
+
+        <div className="dashboard-system">
+          <div>
+            <strong>Sistema</strong>
+            <span>Fichas de usinagem</span>
+          </div>
+          <span className="dashboard-system__online" title="Sistema online" />
+        </div>
+      </aside>
+    );
+  }
 
   const sequenciaSugerida = useMemo(() => {
     const sequenciador =
@@ -285,6 +415,104 @@ export default function Sequenciador6064() {
 
   function usaSetupMorsaVacuo(maquinaId: string) {
     return maquinaId === "6064";
+  }
+
+  if (pagina === "configuracoes") {
+    return (
+      <div className="dashboard-shell">
+        {renderSidebar("configuracoes")}
+
+        <main className="dashboard-main settings-main">
+          <header className="dashboard-header">
+            <div>
+              <span className="dashboard-eyebrow">Preferências visuais</span>
+              <h1>Configurações</h1>
+              <p>Personalize somente a aparência do sistema.</p>
+            </div>
+
+            <div className="dashboard-header__status">
+              <span className="dashboard-header__status-icon">
+                <Palette size={19} />
+              </span>
+              <div>
+                <span>Tema atual</span>
+                <strong>{tema === "dark" ? "Escuro" : "Claro"}</strong>
+              </div>
+            </div>
+          </header>
+
+          <section className="appearance-panel">
+            <div className="appearance-panel__heading">
+              <span className="appearance-panel__icon">
+                <Palette size={25} />
+              </span>
+              <div>
+                <h2>Aparência da interface</h2>
+                <p>Escolha o tema que será usado neste navegador.</p>
+              </div>
+            </div>
+
+            <div className="theme-options" role="radiogroup" aria-label="Tema">
+              <button
+                type="button"
+                role="radio"
+                aria-checked={tema === "dark"}
+                className={`theme-option ${tema === "dark" ? "is-selected" : ""}`}
+                onClick={() => aplicarTema("dark")}
+              >
+                <span className="theme-option__preview is-dark">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+                <span className="theme-option__description">
+                  <span className="theme-option__title">
+                    <Moon size={20} />
+                    Tema escuro
+                  </span>
+                  <small>Visual atual aprovado, com fundo azul-escuro.</small>
+                </span>
+                <span className="theme-option__check" aria-hidden="true">
+                  ✓
+                </span>
+              </button>
+
+              <button
+                type="button"
+                role="radio"
+                aria-checked={tema === "light"}
+                className={`theme-option ${tema === "light" ? "is-selected" : ""}`}
+                onClick={() => aplicarTema("light")}
+              >
+                <span className="theme-option__preview is-light">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+                <span className="theme-option__description">
+                  <span className="theme-option__title">
+                    <Sun size={20} />
+                    Tema claro
+                  </span>
+                  <small>Fundo claro, cards brancos e azul Tramontina.</small>
+                </span>
+                <span className="theme-option__check" aria-hidden="true">
+                  ✓
+                </span>
+              </button>
+            </div>
+
+            <div className="appearance-panel__note">
+              A preferência é salva automaticamente neste navegador.
+            </div>
+          </section>
+
+          <footer className="dashboard-footer">
+            © 2026 Tramontina · Fichas de Usinagem
+          </footer>
+        </main>
+      </div>
+    );
   }
 
   if (pagina === "historico") {
@@ -635,28 +863,137 @@ export default function Sequenciador6064() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-6">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Sequenciador de Usinagem</h1>
-          <p className="mt-2 text-slate-600">Painel inicial das máquinas.</p>
-        </div>
+    <div className="dashboard-shell">
+      {renderSidebar("home")}
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {machines.map((machine) => (
-            <MachineCard
-              key={machine.id}
-              machine={machine}
-              fila={filasPorMaquina[machine.id] ?? 0}
-              status={machine.id === "6064" ? "Ativa" : "Ativa"}
-              onClick={() => {
-                setMaquinaSelecionada(machine);
-                setPagina("maquina");
-              }}
-            />
-          ))}
-        </div>
-      </div>
+      <main className="dashboard-main">
+        <header className="dashboard-header">
+          <div>
+            <span className="dashboard-eyebrow">Fichas de usinagem</span>
+            <h1>Máquinas</h1>
+            <p>Selecione uma máquina para visualizar e organizar as fichas.</p>
+          </div>
+
+          <div className="dashboard-header__status">
+            <span className="dashboard-header__status-icon">
+              <Activity size={19} />
+            </span>
+            <div>
+              <span>Status do painel</span>
+              <strong>Operação conectada</strong>
+            </div>
+          </div>
+        </header>
+
+        <section id="maquinas" className="machines-section">
+          <div className="machines-grid">
+            {maquinasHome.map((machine) => {
+              const fila = filasPorMaquina[machine.id] ?? 0;
+              const progresso =
+                maiorQuantidade > 0
+                  ? Math.max(8, Math.round((fila / maiorQuantidade) * 100))
+                  : 0;
+
+              return (
+                <MachineCard
+                  key={machine.id}
+                  machine={machine}
+                  fila={fila}
+                  status="Ativa"
+                  progresso={progresso}
+                  onClick={() => {
+                    setMaquinaSelecionada(machine);
+                    setPagina("maquina");
+                  }}
+                />
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="dashboard-stats" aria-label="Resumo das máquinas">
+          <div className="dashboard-stat">
+            <span className="dashboard-stat__icon is-blue">
+              <Boxes size={26} />
+            </span>
+            <div>
+              <span>Total de peças</span>
+              <strong>{totalFila}</strong>
+              <small>nas filas atuais</small>
+            </div>
+          </div>
+
+          <div className="dashboard-stat">
+            <span className="dashboard-stat__icon is-green">
+              <CircleCheck size={26} />
+            </span>
+            <div>
+              <span>Máquinas ativas</span>
+              <strong>{machines.length}</strong>
+              <small>de {machines.length} disponíveis</small>
+            </div>
+          </div>
+
+          <div className="dashboard-stat">
+            <span className="dashboard-stat__icon is-orange">
+              <ChartNoAxesColumnIncreasing size={26} />
+            </span>
+            <div>
+              <span>Maior fila</span>
+              <strong>{filasPorMaquina[maiorFila.id] ?? 0}</strong>
+              <small>máquina {maiorFila.numero}</small>
+            </div>
+          </div>
+
+          <div className="dashboard-stat">
+            <span className="dashboard-stat__icon is-purple">
+              <Gauge size={26} />
+            </span>
+            <div>
+              <span>Média por máquina</span>
+              <strong>{mediaFila}</strong>
+              <small>peças aguardando</small>
+            </div>
+          </div>
+        </section>
+
+        <section className="dashboard-updates">
+          <div className="dashboard-updates__icon">
+            <Activity size={28} />
+          </div>
+
+          <div className="dashboard-updates__content">
+            <div>
+              <span className="dashboard-eyebrow">Visão geral</span>
+              <h2>Atualizações do sistema</h2>
+            </div>
+
+            <ul>
+              <li>
+                <span />
+                Filas das {machines.length} máquinas carregadas no painel
+              </li>
+              <li>
+                <span />
+                {totalFila} peças aguardando sequenciamento ou produção
+              </li>
+              <li>
+                <span />
+                Histórico e produzidas disponíveis após selecionar a máquina
+              </li>
+            </ul>
+          </div>
+
+          <div className="dashboard-updates__hint">
+            <ArrowUpRight size={22} />
+            <span>Selecione um card para continuar o fluxo</span>
+          </div>
+        </section>
+
+        <footer className="dashboard-footer">
+          © 2026 Tramontina · Fichas de Usinagem
+        </footer>
+      </main>
     </div>
   );
 }

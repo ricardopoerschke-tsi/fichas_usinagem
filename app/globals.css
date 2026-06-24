@@ -14,8 +14,23 @@
 
 
 body {
-  background: #f1f5f9;
+  margin: 0;
+  background: #07111f;
   color: #0f172a;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+html[data-theme="light"] body {
+  background: #f5f7fb;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 @media print {
