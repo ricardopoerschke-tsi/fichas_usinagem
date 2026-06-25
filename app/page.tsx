@@ -6,6 +6,19 @@ import type { Peca } from "@/types/peca";
 import { machine6064 } from "@/lib/machines/6064";
 import { machines } from "@/lib/machines";
 import { sequencingStrategies } from "@/sequencing";
+import {
+  criarReferenciaPeca,
+  localizarLimiteCongelado,
+  obterChavePeca,
+  referenciaPecaValida,
+  sequenciarRespeitandoCongelamento,
+  serializarReferenciaPeca,
+  type CongelamentoSequencia,
+} from "@/sequencing/congelamento";
+import {
+  carregarCongelamentoSequencia,
+  salvarCongelamentoSequencia,
+} from "@/lib/congelamentoSequenciaStorage";
 import { ActionCard } from "@/components/ui/ActionCard";
 import { MachineCard } from "@/components/MachineCard";
 import {
@@ -31,6 +44,8 @@ import {
   History,
   CheckCircle2,
   Printer,
+  LockKeyhole,
+  UnlockKeyhole,
 } from "lucide-react";
 
 type Pagina =
@@ -42,6 +57,8 @@ type Pagina =
   | "historico";
 type Setup = "morsa" | "vacuo";
 type Tema = "dark" | "light";
+type LinhaApi = Partial<Peca> &
+  Record<string, string | number | boolean | null | undefined>;
 
 const ordemVisualMaquinas = ["6064", "1572", "725", "5825", "1516"];
 
@@ -55,6 +72,9 @@ export default function Sequenciador6064() {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [filasPorMaquina, setFilasPorMaquina] = useState<Record<string, number>>({});
   const [tema, setTema] = useState<Tema>("dark");
+  const [congelamento, setCongelamento] =
+    useState<CongelamentoSequencia | null>(null);
+  const [referenciaParaCongelar, setReferenciaParaCongelar] = useState("");
 
   useEffect(() => {
     try {
@@ -97,22 +117,35 @@ export default function Sequenciador6064() {
         const response = await fetch(maquinaSelecionada.apiFila);
         const data = await response.json();
 
-        const convertido: Peca[] = data.map((item: any) => {
-          const dimensoes = item.dimensoes || item["Dimensões"] || "";
-          const observacoes = item.observacoes || item["Observações"] || "";
-          const ordemMes = item.ordemMes || item["Ordem mes"] || item["Ordem MES"] || item["Ordem Mes"] || "";
+        const convertido: Peca[] = data.map((item: LinhaApi) => {
+          const dimensoes = obterTexto(item, "dimensoes", "Dimensões");
+          const observacoes = obterTexto(
+            item,
+            "observacoes",
+            "Observações"
+          );
+          const ordemMes = obterTexto(
+            item,
+            "ordemMes",
+            "Ordem mes",
+            "Ordem MES",
+            "Ordem Mes"
+          );
 
           return {
-            desenho: item.desenho || item["Desenho"] || "",
-            descricao: item.descricao || item["Descrição"] || "",
+            desenho: obterTexto(item, "desenho", "Desenho"),
+            descricao: obterTexto(item, "descricao", "Descrição"),
             dimensoes,
-            largura: item.largura || extrairLargura(dimensoes),
-            prazo: item.prazo || item["Prazo"] || "",
-            quantidade: item.quantidade || item["Quantidade"] || "",
-            ordem: item.ordem || item["Ordem"] || "",
+            largura:
+              typeof item.largura === "number"
+                ? item.largura
+                : extrairLargura(dimensoes),
+            prazo: obterTexto(item, "prazo", "Prazo"),
+            quantidade: obterTexto(item, "quantidade", "Quantidade"),
+            ordem: obterTexto(item, "ordem", "Ordem"),
             ordemMes,
             observacoes,
-            material: item.material || item["Material"] || "",
+            material: obterTexto(item, "material", "Material"),
             urgente:
               item.urgente === true ||
               String(item.urgente).toLowerCase() === "true" ||
@@ -135,21 +168,29 @@ export default function Sequenciador6064() {
       try {
         const response = await fetch(maquinaSelecionada.apiHistorico);
         const data = await response.json();
-        const convertido: Peca[] = data.map((item: any) => {
-          const dimensoes = item.dimensoes || item["Dimensões"] || "";
+        const convertido: Peca[] = data.map((item: LinhaApi) => {
+          const dimensoes = obterTexto(item, "dimensoes", "Dimensões");
 
           return {
-            desenho: item.desenho || item["Desenho"] || "",
-            descricao: item.descricao || item["Descrição"] || "",
+            desenho: obterTexto(item, "desenho", "Desenho"),
+            descricao: obterTexto(item, "descricao", "Descrição"),
             dimensoes,
             largura: extrairLargura(dimensoes),
-            prazo: item.prazo || item["Prazo"] || "",
-            quantidade: item.quantidade || item["Quantidade"] || "",
-            ordem: item.ordem || item["Ordem"] || "",
-            observacoes: item.observacoes || item["Observações"] || "",
-            material: item.material || item["Material"] || "",
+            prazo: obterTexto(item, "prazo", "Prazo"),
+            quantidade: obterTexto(item, "quantidade", "Quantidade"),
+            ordem: obterTexto(item, "ordem", "Ordem"),
+            observacoes: obterTexto(
+              item,
+              "observacoes",
+              "Observações"
+            ),
+            material: obterTexto(item, "material", "Material"),
             urgente: false,
-            dataProduzido: item.dataProduzido || item["Data Produção"] || "",
+            dataProduzido: obterTexto(
+              item,
+              "dataProduzido",
+              "Data Produção"
+            ),
           };
         });
 
@@ -162,6 +203,19 @@ export default function Sequenciador6064() {
     carregarDados();
     carregarHistorico();
   }, [maquinaSelecionada]);
+
+  useEffect(() => {
+    const congelamentoSalvo = carregarCongelamentoSequencia(
+      maquinaSelecionada.id
+    );
+
+    // O congelamento pertence à máquina selecionada e é restaurado ao acessá-la.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setCongelamento(congelamentoSalvo);
+    setReferenciaParaCongelar("");
+    setSelecionadas([]);
+    setDragIndex(null);
+  }, [maquinaSelecionada.id]);
 
   const maquina = {
     ...maquinaSelecionada,
@@ -269,10 +323,22 @@ export default function Sequenciador6064() {
       ];
 
     const hoje = formatarDataHoje();
-    const sequenciaSugerida = sequenciador
-      ? sequenciador(sequencia, setupAtual)
-      : sequencia;
-    const novaSequencia = sequenciaSugerida.map((peca) => ({
+    const resultado = sequenciarRespeitandoCongelamento(
+      sequencia,
+      congelamento,
+      (parteLivre) =>
+        sequenciador ? sequenciador(parteLivre, setupAtual) : parteLivre
+    );
+
+    if (!resultado.referenciaEncontrada) {
+      alert(
+        "A peça usada como limite do congelamento não foi localizada. A sequência não foi alterada. Descongele a sequência ou verifique os dados da peça."
+      );
+      setPagina("editarSequencia");
+      return;
+    }
+
+    const novaSequencia = resultado.sequencia.map((peca) => ({
       ...peca,
       dataSequenciamento: peca.dataSequenciamento || hoje,
     }));
@@ -284,18 +350,70 @@ export default function Sequenciador6064() {
   function moverItem(origem: number | null, destino: number) {
     if (origem === destino || origem === null) return;
 
+    const limiteCongelado = localizarLimiteCongelado(sequencia, congelamento);
+
+    if (
+      congelamento &&
+      (limiteCongelado < 0 ||
+        origem <= limiteCongelado ||
+        destino <= limiteCongelado)
+    ) {
+      alert(
+        "A sequência está congelada. Não é permitido mover peças para dentro ou para fora da área congelada."
+      );
+      setDragIndex(null);
+      return;
+    }
+
     const nova = [...sequencia];
     const [item] = nova.splice(origem, 1);
     nova.splice(destino, 0, item);
     setSequencia(nova);
   }
 
-  function alternarSelecao(desenho: string) {
+  function alternarSelecao(peca: Peca) {
+    const chave = obterChavePeca(peca);
+
     setSelecionadas((atuais) =>
-      atuais.includes(desenho)
-        ? atuais.filter((item) => item !== desenho)
-        : [...atuais, desenho]
+      atuais.includes(chave)
+        ? atuais.filter((item) => item !== chave)
+        : [...atuais, chave]
     );
+  }
+
+  function confirmarCongelamento() {
+    const peca = sequencia.find(
+      (item) => obterChavePeca(item) === referenciaParaCongelar
+    );
+
+    if (!peca) {
+      alert("Selecione a última peça que já foi liberada ao operador.");
+      return;
+    }
+
+    const ultimaPeca = criarReferenciaPeca(peca);
+
+    if (!referenciaPecaValida(ultimaPeca)) {
+      alert(
+        "Não é possível congelar esta peça porque Desenho e Ordem MES são obrigatórios para formar a chave única."
+      );
+      return;
+    }
+
+    const novoCongelamento: CongelamentoSequencia = { ultimaPeca };
+
+    setCongelamento(novoCongelamento);
+    salvarCongelamentoSequencia(
+      maquinaSelecionada.id,
+      novoCongelamento
+    );
+    setReferenciaParaCongelar("");
+  }
+
+  function descongelarSequencia() {
+    setCongelamento(null);
+    salvarCongelamentoSequencia(maquinaSelecionada.id, null);
+    setDragIndex(null);
   }
 
   function imprimirSequencia() {
@@ -306,6 +424,7 @@ export default function Sequenciador6064() {
     const payload = sequencia.map((peca, index) => ({
       sequencia: index + 1,
       desenho: peca.desenho,
+      ordemMes: peca.ordemMes ?? "",
     }));
 
     try {
@@ -352,6 +471,11 @@ export default function Sequenciador6064() {
   async function marcarProduzidas() {
     if (selecionadas.length === 0) return;
 
+    const pecasSelecionadas = sequencia.filter((peca) =>
+      selecionadas.includes(obterChavePeca(peca))
+    );
+    const referenciasSelecionadas = pecasSelecionadas.map(criarReferenciaPeca);
+
     try {
       const response = await fetch("/api/fichas/produzidas", {
         method: "POST",
@@ -360,7 +484,8 @@ export default function Sequenciador6064() {
         },
         body: JSON.stringify({
           maquinaId: maquinaSelecionada.id,
-          desenhos: selecionadas,
+          desenhos: pecasSelecionadas.map((peca) => peca.desenho),
+          pecas: referenciasSelecionadas,
         }),
       });
 
@@ -372,8 +497,18 @@ export default function Sequenciador6064() {
       }
 
       setSequencia((atual) =>
-        atual.filter((peca) => !selecionadas.includes(peca.desenho))
+        atual.filter(
+          (peca) => !selecionadas.includes(obterChavePeca(peca))
+        )
       );
+
+      const chaveLimite = congelamento
+        ? serializarReferenciaPeca(congelamento.ultimaPeca)
+        : null;
+
+      if (chaveLimite && selecionadas.includes(chaveLimite)) {
+        descongelarSequencia();
+      }
 
       setSelecionadas([]);
 
@@ -592,6 +727,20 @@ export default function Sequenciador6064() {
 
   if (pagina === "verSequencia" || pagina === "editarSequencia") {
     const modoEdicao = pagina === "editarSequencia";
+    const limiteCongelado = localizarLimiteCongelado(
+      sequencia,
+      congelamento
+    );
+    const referenciaCongeladaEncontrada =
+      !congelamento || limiteCongelado >= 0;
+    const contagemReferencias = sequencia.reduce<Record<string, number>>(
+      (acc, peca) => {
+        const chave = obterChavePeca(peca);
+        acc[chave] = (acc[chave] ?? 0) + 1;
+        return acc;
+      },
+      {}
+    );
     const contagemOF = sequencia.reduce<Record<string, number>>((acc, peca) => {
       const of = peca.ordem;
 
@@ -694,6 +843,122 @@ export default function Sequenciador6064() {
             </div>
           </header>
 
+          <section
+            className={`sequence-freeze-panel ${
+              congelamento ? "is-frozen" : ""
+            } ${!referenciaCongeladaEncontrada ? "has-error" : ""}`}
+            aria-live="polite"
+          >
+            <div className="sequence-freeze-panel__icon">
+              {congelamento ? (
+                <LockKeyhole size={23} />
+              ) : (
+                <UnlockKeyhole size={23} />
+              )}
+            </div>
+
+            {congelamento ? (
+              <>
+                <div className="sequence-freeze-panel__content">
+                  <strong>🔒 Sequência congelada</strong>
+                  <span>Até a peça liberada ao operador</span>
+                </div>
+
+                <dl className="sequence-freeze-panel__details">
+                  <div>
+                    <dt>Desenho</dt>
+                    <dd>{congelamento.ultimaPeca.desenho}</dd>
+                  </div>
+                  <div>
+                    <dt>Ordem MES</dt>
+                    <dd>{congelamento.ultimaPeca.ordemMes}</dd>
+                  </div>
+                  <div>
+                    <dt>Posição atual</dt>
+                    <dd>
+                      {referenciaCongeladaEncontrada
+                        ? limiteCongelado + 1
+                        : "Não localizada"}
+                    </dd>
+                  </div>
+                </dl>
+
+                <button
+                  type="button"
+                  onClick={descongelarSequencia}
+                  className="flow-button is-secondary"
+                >
+                  <UnlockKeyhole size={18} />
+                  Descongelar sequência
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="sequence-freeze-panel__content">
+                  <strong>Congelar programação liberada</strong>
+                  <span>
+                    Selecione a última peça entregue ao operador. O limite será
+                    salvo por Desenho + Ordem MES.
+                  </span>
+                </div>
+
+                <label className="sequence-freeze-panel__selector">
+                  <span>Última peça liberada</span>
+                  <select
+                    value={referenciaParaCongelar}
+                    onChange={(event) =>
+                      setReferenciaParaCongelar(event.target.value)
+                    }
+                  >
+                    <option value="">Selecione uma peça</option>
+                    {sequencia.map((peca, index) => {
+                      const referencia = criarReferenciaPeca(peca);
+                      const chave = obterChavePeca(peca);
+                      const referenciaDuplicada =
+                        contagemReferencias[chave] > 1;
+                      const podeCongelar =
+                        referenciaPecaValida(referencia) &&
+                        !referenciaDuplicada;
+
+                      return (
+                        <option
+                          key={`freeze-${chave}-${index}`}
+                          value={chave}
+                          disabled={!podeCongelar}
+                        >
+                          {index + 1} — {peca.desenho || "Sem desenho"} — MES{" "}
+                          {peca.ordemMes?.trim() || "não informada"}
+                          {referenciaDuplicada
+                            ? " (chave duplicada)"
+                            : !podeCongelar
+                              ? " (dados incompletos)"
+                              : ""}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={confirmarCongelamento}
+                  disabled={!referenciaParaCongelar}
+                  className="flow-button is-primary"
+                >
+                  <LockKeyhole size={18} />
+                  Congelar sequência
+                </button>
+              </>
+            )}
+
+            {!referenciaCongeladaEncontrada && (
+              <p className="sequence-freeze-panel__error">
+                A peça de referência não está na fila atual. Por segurança, o
+                sequenciamento e a movimentação manual permanecem bloqueados.
+              </p>
+            )}
+          </section>
+
           <div className="print-header hidden">
             <h1>Sequência {maquina.numero} - {maquina.nome}</h1>
             <p>Setup considerado: {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}</p>
@@ -735,10 +1000,19 @@ export default function Sequenciador6064() {
                 usaSetupMorsaVacuo(maquinaSelecionada.id) &&
                 index > 0 &&
                 getSetupLabel(sequencia[index - 1]) !== getSetupLabel(peca);
-              const selecionada = selecionadas.includes(peca.desenho);
+              const selecionada = selecionadas.includes(obterChavePeca(peca));
+              const pecaCongelada =
+                Boolean(congelamento) &&
+                referenciaCongeladaEncontrada &&
+                index <= limiteCongelado;
+              const podeArrastar =
+                modoEdicao &&
+                (!congelamento ||
+                  (referenciaCongeladaEncontrada &&
+                    index > limiteCongelado));
 
               return (
-                <React.Fragment key={`${peca.desenho}-${index}`}>
+                <React.Fragment key={`${obterChavePeca(peca)}-${index}`}>
                   {trocaSetup && (
                     <div className="sequence-setup-divider">
                       Trocar setup para {getSetupLabel(peca)}
@@ -746,8 +1020,10 @@ export default function Sequenciador6064() {
                   )}
 
                   <div
-                    draggable={modoEdicao}
-                    onDragStart={modoEdicao ? () => setDragIndex(index) : undefined}
+                    draggable={podeArrastar}
+                    onDragStart={
+                      podeArrastar ? () => setDragIndex(index) : undefined
+                    }
                     onDragOver={
                       modoEdicao
                         ? (event) => {
@@ -770,7 +1046,9 @@ export default function Sequenciador6064() {
                     onDragEnd={modoEdicao ? () => setDragIndex(null) : undefined}
                     className={`sequence-item ${
                       selecionada ? "is-selected" : ""
-                    } ${modoEdicao ? "is-draggable" : ""}`}
+                    } ${podeArrastar ? "is-draggable" : ""} ${
+                      pecaCongelada ? "is-frozen" : ""
+                    }`}
                   >
                     <div className="sequence-item__layout">
                       <div className="sequence-item__order">
@@ -830,10 +1108,15 @@ export default function Sequenciador6064() {
                             <input
                               type="checkbox"
                               checked={selecionada}
-                              onChange={() => alternarSelecao(peca.desenho)}
+                              onChange={() => alternarSelecao(peca)}
                             />
                             Produzida
                           </label>
+                        ) : pecaCongelada ? (
+                          <span className="sequence-frozen-badge">
+                            <LockKeyhole size={13} />
+                            Congelada
+                          </span>
                         ) : (
                           <span className="sequence-editing-badge">
                             Edição ativa
@@ -1130,6 +1413,18 @@ function extrairLargura(dimensoes: string): number {
   if (partes.length < 2) return 0;
 
   return partes[1] || 0;
+}
+
+function obterTexto(item: LinhaApi, ...campos: string[]): string {
+  for (const campo of campos) {
+    const valor = item[campo];
+
+    if (valor !== undefined && valor !== null && String(valor).trim() !== "") {
+      return String(valor);
+    }
+  }
+
+  return "";
 }
 
 function formatarDataHoje() {

@@ -158,12 +158,16 @@ Se a máquina enviar peças para uma próxima operação:
 - [ ] Validar ordem na tela.
 - [ ] Validar critérios principais da regra.
 - [ ] Ajustar manualmente por drag and drop.
+- [ ] Congelar até uma peça com Desenho e Ordem MES.
+- [ ] Confirmar que "Criar sequência" preserva o prefixo congelado.
+- [ ] Confirmar que o drag and drop não atravessa o limite congelado.
+- [ ] Descongelar e confirmar que toda a fila volta a ser editável.
 
 ### Salvamento
 
 - [ ] Testar salvar sequência.
 - [ ] Confirmar que `/api/fichas/salvar` recebe `maquinaId`.
-- [ ] Confirmar payload com `{ sequencia, desenho }`.
+- [ ] Confirmar payload com `{ sequencia, desenho, ordemMes }`.
 - [ ] Confirmar resposta de sucesso do Apps Script.
 - [ ] Confirmar nova ordem na aba da máquina.
 - [ ] Recarregar o site.

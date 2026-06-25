@@ -1711,6 +1711,116 @@ html[data-theme="light"] .machine-action-card:hover {
   cursor: not-allowed;
 }
 
+.sequence-freeze-panel {
+  display: grid;
+  grid-template-columns: auto minmax(220px, 1fr) minmax(300px, 1.2fr) auto;
+  align-items: center;
+  gap: 18px;
+  margin-top: 16px;
+  padding: 17px 19px;
+  border: 1px solid rgba(139, 167, 201, 0.2);
+  border-radius: 15px;
+  background:
+    linear-gradient(135deg, rgba(17, 35, 56, 0.9), rgba(9, 23, 39, 0.92)),
+    #0c1b2d;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.12);
+}
+
+.sequence-freeze-panel.is-frozen {
+  border-color: rgba(245, 177, 66, 0.38);
+  background:
+    linear-gradient(135deg, rgba(69, 48, 18, 0.5), rgba(22, 28, 37, 0.94)),
+    #0c1b2d;
+}
+
+.sequence-freeze-panel.has-error {
+  border-color: rgba(239, 83, 80, 0.55);
+}
+
+.sequence-freeze-panel__icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  color: #f5b142;
+  background: rgba(245, 177, 66, 0.12);
+}
+
+.sequence-freeze-panel:not(.is-frozen) .sequence-freeze-panel__icon {
+  color: var(--machine-page-accent);
+  background: rgba(var(--machine-page-accent-rgb), 0.12);
+}
+
+.sequence-freeze-panel__content {
+  display: grid;
+  gap: 4px;
+}
+
+.sequence-freeze-panel__content strong {
+  color: #f4f7fb;
+  font-size: 13px;
+}
+
+.sequence-freeze-panel__content span {
+  color: #8fa2b7;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.sequence-freeze-panel__details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(90px, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.sequence-freeze-panel__details > div {
+  min-width: 0;
+  padding: 9px 11px;
+  border: 1px solid rgba(245, 177, 66, 0.17);
+  border-radius: 9px;
+  background: rgba(5, 16, 28, 0.25);
+}
+
+.sequence-freeze-panel__details dt,
+.sequence-freeze-panel__selector > span {
+  color: #8094aa;
+  font-size: 9px;
+}
+
+.sequence-freeze-panel__details dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  color: #f2f5f9;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sequence-freeze-panel__selector {
+  display: grid;
+  gap: 6px;
+}
+
+.sequence-freeze-panel__selector select {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgba(139, 167, 201, 0.24);
+  border-radius: 9px;
+  color: #e8eef6;
+  background: #10243a;
+  font-size: 11px;
+}
+
+.sequence-freeze-panel__error {
+  grid-column: 2 / -1;
+  margin: -4px 0 0;
+  color: #ff9a9a;
+  font-size: 10px;
+  font-weight: 650;
+}
+
 .sequence-list {
   display: grid;
   gap: 12px;
@@ -1761,6 +1871,18 @@ html[data-theme="light"] .machine-action-card:hover {
   box-shadow:
     0 0 0 1px rgba(67, 200, 90, 0.14),
     0 14px 34px rgba(0, 0, 0, 0.13);
+}
+
+.sequence-item.is-frozen {
+  border-color: rgba(245, 177, 66, 0.3);
+  background:
+    linear-gradient(135deg, rgba(61, 45, 21, 0.46), rgba(12, 26, 42, 0.95)),
+    #0c1b2d;
+}
+
+.sequence-item.is-frozen .sequence-item__drag {
+  color: #a57b38;
+  opacity: 0.7;
 }
 
 .sequence-item__layout {
@@ -1888,11 +2010,26 @@ html[data-theme="light"] .machine-action-card:hover {
   font-weight: 700;
 }
 
+.sequence-frozen-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 35px;
+  padding: 0 11px;
+  border-radius: 9px;
+  color: #f5b142;
+  background: rgba(245, 177, 66, 0.12);
+  font-size: 9px;
+  font-weight: 700;
+}
+
 html[data-theme="light"] .flow-header,
 html[data-theme="light"] .sequence-header,
 html[data-theme="light"] .flow-empty-state,
 html[data-theme="light"] .history-card,
-html[data-theme="light"] .sequence-item {
+html[data-theme="light"] .sequence-item,
+html[data-theme="light"] .sequence-freeze-panel {
   border-color: #dce4ed;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: 0 13px 32px rgba(26, 54, 89, 0.07);
@@ -1908,6 +2045,34 @@ html[data-theme="light"] .sequence-header__setup strong,
 html[data-theme="light"] .sequence-item__title h2,
 html[data-theme="light"] .sequence-item__meta > strong {
   color: #101827;
+}
+
+html[data-theme="light"] .sequence-freeze-panel.is-frozen,
+html[data-theme="light"] .sequence-item.is-frozen {
+  border-color: #e9c47c;
+  background: #fffbf2;
+}
+
+html[data-theme="light"] .sequence-freeze-panel__content strong,
+html[data-theme="light"] .sequence-freeze-panel__details dd {
+  color: #101827;
+}
+
+html[data-theme="light"] .sequence-freeze-panel__content span,
+html[data-theme="light"] .sequence-freeze-panel__details dt,
+html[data-theme="light"] .sequence-freeze-panel__selector > span {
+  color: #64748b;
+}
+
+html[data-theme="light"] .sequence-freeze-panel__details > div {
+  border-color: #ead8b4;
+  background: #fff;
+}
+
+html[data-theme="light"] .sequence-freeze-panel__selector select {
+  border-color: #d7e1ec;
+  color: #172033;
+  background: #fff;
 }
 
 html[data-theme="light"] .flow-header p,
@@ -1994,6 +2159,15 @@ html[data-theme="light"] .sequence-editing-badge {
   .sequence-header__controls {
     justify-content: flex-start;
     flex-wrap: wrap;
+  }
+
+  .sequence-freeze-panel {
+    grid-template-columns: auto minmax(220px, 1fr) minmax(300px, 1.4fr);
+  }
+
+  .sequence-freeze-panel > .flow-button {
+    grid-column: 2 / -1;
+    justify-self: end;
   }
 
   .sequence-item__layout {
@@ -2086,6 +2260,24 @@ html[data-theme="light"] .sequence-editing-badge {
   .sequence-header {
     position: relative;
     top: auto;
+  }
+
+  .sequence-freeze-panel {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .sequence-freeze-panel__details,
+  .sequence-freeze-panel__selector,
+  .sequence-freeze-panel > .flow-button {
+    grid-column: 2;
+  }
+
+  .sequence-freeze-panel > .flow-button {
+    justify-self: start;
+  }
+
+  .sequence-freeze-panel__error {
+    grid-column: 2;
   }
 
   .sequence-item__layout {
@@ -2254,6 +2446,24 @@ html[data-theme="light"] .sequence-editing-badge {
   .sequence-header__setup,
   .flow-button {
     width: 100%;
+  }
+
+  .sequence-freeze-panel {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+
+  .sequence-freeze-panel__icon,
+  .sequence-freeze-panel__content,
+  .sequence-freeze-panel__details,
+  .sequence-freeze-panel__selector,
+  .sequence-freeze-panel > .flow-button,
+  .sequence-freeze-panel__error {
+    grid-column: 1;
+  }
+
+  .sequence-freeze-panel__details {
+    grid-template-columns: 1fr;
   }
 
   .sequence-item__layout {

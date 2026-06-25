@@ -134,6 +134,24 @@ Responsabilidades dessa camada:
 - devolver uma nova lista ordenada;
 - manter as regras específicas isoladas por máquina.
 
+### Congelamento da sequência
+
+O arquivo `sequencing/congelamento.ts` aplica uma regra transversal a todas as
+estratégias:
+
+- identifica a última peça congelada por `Desenho + Ordem MES`;
+- localiza novamente essa peça na fila atual;
+- preserva todas as posições até ela;
+- envia somente a parte posterior para a estratégia da máquina;
+- concatena a parte congelada com a parte recalculada.
+
+A criação e a comparação da referência ficam centralizadas nesse arquivo. Se
+um identificador único de peça for disponibilizado no futuro, a substituição
+deve ser feita nessa camada, sem alterar cada algoritmo de máquina.
+
+O estado do congelamento é separado por `machineId` e persistido no navegador
+por `lib/congelamentoSequenciaStorage.ts`.
+
 ## APIs do Next.js
 
 As APIs ficam em `app/api/fichas`.
@@ -180,7 +198,8 @@ POST /api/fichas/salvar
 Responsabilidades:
 
 - receber `maquinaId`;
-- receber a lista de sequência no formato `{ sequencia, desenho }`;
+- receber a lista de sequência no formato
+  `{ sequencia, desenho, ordemMes? }`;
 - validar máquina cadastrada;
 - encaminhar a ação `salvarSequencia` para o Apps Script;
 - devolver ao frontend a resposta real da integração.
@@ -195,6 +214,8 @@ Responsabilidades:
 
 - receber `maquinaId`;
 - receber a lista de desenhos marcados como produzidos;
+- receber também as referências `{ desenho, ordemMes }`, preparando a
+  integração para desenhos duplicados;
 - encaminhar a ação `produzidas` para o Apps Script;
 - retornar o resultado da movimentação.
 
@@ -243,6 +264,7 @@ O salvamento da sequência atualiza a ordem da aba da fila. A marcação de prod
 | `app/page.tsx` | Interface, estado da tela, ações do usuário e chamadas às APIs |
 | `components/` | Elementos visuais reutilizáveis |
 | `lib/machines` | Cadastro declarativo das máquinas |
+| `lib/congelamentoSequenciaStorage.ts` | Persistência do congelamento por máquina no navegador |
 | `sequencing` | Regras de ordenação e agrupamento |
 | `app/api/fichas/*` | Leitura da planilha e ponte com Apps Script |
 | Apps Script | Escrita e movimentação de linhas na planilha |

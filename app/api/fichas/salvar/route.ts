@@ -9,6 +9,7 @@ const TOKEN = "6064_teste_123";
 type ItemSequencia = {
   sequencia: number;
   desenho: string;
+  ordemMes?: string;
 };
 
 function isItemSequencia(item: unknown): item is ItemSequencia {
@@ -20,7 +21,8 @@ function isItemSequencia(item: unknown): item is ItemSequencia {
     Number.isInteger(candidato.sequencia) &&
     Number(candidato.sequencia) > 0 &&
     typeof candidato.desenho === "string" &&
-    candidato.desenho.trim().length > 0
+    candidato.desenho.trim().length > 0 &&
+    (candidato.ordemMes === undefined || typeof candidato.ordemMes === "string")
   );
 }
 
@@ -45,7 +47,8 @@ export async function POST(request: Request) {
         {
           success: false,
           error: "Payload de sequencia invalido",
-          details: "Esperado: { maquinaId, sequencia: [{ sequencia, desenho }] }",
+          details:
+            "Esperado: { maquinaId, sequencia: [{ sequencia, desenho, ordemMes? }] }",
         },
         { status: 400 }
       );
@@ -55,10 +58,13 @@ export async function POST(request: Request) {
       token: TOKEN,
       acao: "salvarSequencia",
       maquinaId,
-      sequencia: sequencia.map(({ sequencia, desenho }: ItemSequencia) => ({
-        sequencia,
-        desenho,
-      })),
+      sequencia: sequencia.map(
+        ({ sequencia, desenho, ordemMes }: ItemSequencia) => ({
+          sequencia,
+          desenho,
+          ordemMes: ordemMes ?? "",
+        })
+      ),
     };
 
     const response = await fetch(APPS_SCRIPT_URL, {
