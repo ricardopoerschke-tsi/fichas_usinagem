@@ -49,6 +49,13 @@ textarea {
   .print-list * {
     visibility: visible;
   }
+  .print-header,
+  .print-header *,
+  .print-list,
+  .print-list * {
+    color: #000 !important;
+    opacity: 1 !important;
+  }
 
   .print-header {
     display: block !important;
