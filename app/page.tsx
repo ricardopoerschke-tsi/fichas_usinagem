@@ -26,9 +26,7 @@ import {
   ArrowLeft,
   ArrowUpRight,
   Boxes,
-  ChartNoAxesColumnIncreasing,
   CircleCheck,
-  Gauge,
   Home,
   LayoutGrid,
   Moon,
@@ -71,6 +69,7 @@ export default function Sequenciador6064() {
   const [selecionadas, setSelecionadas] = useState<string[]>([]);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [filasPorMaquina, setFilasPorMaquina] = useState<Record<string, number>>({});
+  const [pecasPorMaquina, setPecasPorMaquina] = useState<Record<string, Peca[]>>({});
   const [tema, setTema] = useState<Tema>("dark");
   const [congelamento, setCongelamento] =
     useState<CongelamentoSequencia | null>(null);
@@ -97,12 +96,20 @@ export default function Sequenciador6064() {
           machines.map(async (machine) => {
             const response = await fetch(machine.apiFila);
             const data = await response.json();
+            const pecas = Array.isArray(data)
+              ? data.map(normalizarPecaFila)
+              : [];
 
-            return [machine.id, Array.isArray(data) ? data.length : 0] as const;
+            return [machine.id, pecas] as const;
           })
         );
 
-        setFilasPorMaquina(Object.fromEntries(resultados));
+        setPecasPorMaquina(Object.fromEntries(resultados));
+        setFilasPorMaquina(
+          Object.fromEntries(
+            resultados.map(([machineId, pecas]) => [machineId, pecas.length])
+          )
+        );
       } catch (error) {
         console.error("Erro ao carregar filas das máquinas:", error);
       }
@@ -117,48 +124,12 @@ export default function Sequenciador6064() {
         const response = await fetch(maquinaSelecionada.apiFila);
         const data = await response.json();
 
-        const convertido: Peca[] = data.map((item: LinhaApi) => {
-          const dimensoes = obterTexto(item, "dimensoes", "Dimensões");
-          const observacoes = obterTexto(
-            item,
-            "observacoes",
-            "Observações"
-          );
-          const ordemMes = obterTexto(
-            item,
-            "ordemMes",
-            "Ordem mes",
-            "Ordem MES",
-            "Ordem Mes"
-          );
-
-          return {
-            desenho: obterTexto(item, "desenho", "Desenho"),
-            descricao: obterTexto(item, "descricao", "Descrição"),
-            dimensoes,
-            largura:
-              typeof item.largura === "number"
-                ? item.largura
-                : extrairLargura(dimensoes),
-            prazo: obterTexto(item, "prazo", "Prazo"),
-            quantidade: obterTexto(item, "quantidade", "Quantidade"),
-            ordem: obterTexto(item, "ordem", "Ordem"),
-            ordemMes,
-            observacoes,
-            material: obterTexto(item, "material", "Material"),
-            urgente:
-              item.urgente === true ||
-              String(item.urgente).toLowerCase() === "true" ||
-              observacoes.toLowerCase().includes("urgente"),
-          };
-        });
+        const convertido: Peca[] = Array.isArray(data)
+          ? data.map(normalizarPecaFila)
+          : [];
 
         setSequencia(convertido);
-
-        setFilasPorMaquina((atual) => ({
-          ...atual,
-          [maquinaSelecionada.id]: convertido.length,
-        }));
+        atualizarFilaHome(maquinaSelecionada.id, convertido);
       } catch (error) {
         console.error("Erro ao carregar planilha:", error);
       }
@@ -217,6 +188,17 @@ export default function Sequenciador6064() {
     setDragIndex(null);
   }, [maquinaSelecionada.id]);
 
+  function atualizarFilaHome(machineId: string, pecas: Peca[]) {
+    setPecasPorMaquina((atual) => ({
+      ...atual,
+      [machineId]: pecas,
+    }));
+    setFilasPorMaquina((atual) => ({
+      ...atual,
+      [machineId]: pecas.length,
+    }));
+  }
+
   const maquina = {
     ...maquinaSelecionada,
     fila: sequencia.length,
@@ -230,20 +212,22 @@ export default function Sequenciador6064() {
     (total, machine) => total + (filasPorMaquina[machine.id] ?? 0),
     0
   );
-  const maiorFila = machines.reduce(
-    (maior, machine) =>
-      (filasPorMaquina[machine.id] ?? 0) >
-      (filasPorMaquina[maior.id] ?? 0)
-        ? machine
-        : maior,
-    machines[0]
+  const pecasTodasFilas = machines.flatMap(
+    (machine) => pecasPorMaquina[machine.id] ?? []
   );
+  const pecasUrgentes = pecasTodasFilas.filter((peca) => peca.urgente).length;
+  const ordensEmAndamento = new Set(
+    pecasTodasFilas
+      .map((peca) => peca.ordem?.trim())
+      .filter(
+        (ordem): ordem is string =>
+          Boolean(ordem) && ordem !== "-" && ordem !== "Sem OF"
+      )
+  ).size;
   const maiorQuantidade = Math.max(
     ...machines.map((machine) => filasPorMaquina[machine.id] ?? 0),
     0
   );
-  const mediaFila =
-    machines.length > 0 ? Math.round(totalFila / machines.length) : 0;
 
   function aplicarTema(novoTema: Tema) {
     setTema(novoTema);
@@ -496,11 +480,11 @@ export default function Sequenciador6064() {
         return;
       }
 
-      setSequencia((atual) =>
-        atual.filter(
-          (peca) => !selecionadas.includes(obterChavePeca(peca))
-        )
+      const novaSequencia = sequencia.filter(
+        (peca) => !selecionadas.includes(obterChavePeca(peca))
       );
+      setSequencia(novaSequencia);
+      atualizarFilaHome(maquinaSelecionada.id, novaSequencia);
 
       const chaveLimite = congelamento
         ? serializarReferenciaPeca(congelamento.ultimaPeca)
@@ -1323,42 +1307,42 @@ export default function Sequenciador6064() {
               <Boxes size={26} />
             </span>
             <div>
-              <span>Total de peças</span>
+              <span>Peças aguardando</span>
               <strong>{totalFila}</strong>
-              <small>nas filas atuais</small>
+              <small>nas filas das máquinas</small>
             </div>
           </div>
 
           <div className="dashboard-stat">
             <span className="dashboard-stat__icon is-green">
-              <CircleCheck size={26} />
+              <AlertTriangle size={26} />
             </span>
             <div>
-              <span>Máquinas ativas</span>
-              <strong>{machines.length}</strong>
-              <small>de {machines.length} disponíveis</small>
+              <span>Peças urgentes</span>
+              <strong>{pecasUrgentes}</strong>
+              <small>classificadas como urgentes</small>
             </div>
           </div>
 
           <div className="dashboard-stat">
             <span className="dashboard-stat__icon is-orange">
-              <ChartNoAxesColumnIncreasing size={26} />
+              <CircleCheck size={26} />
             </span>
             <div>
-              <span>Maior fila</span>
-              <strong>{filasPorMaquina[maiorFila.id] ?? 0}</strong>
-              <small>máquina {maiorFila.numero}</small>
+              <span>Máquinas cadastradas</span>
+              <strong>{machines.length}</strong>
+              <small>em lib/machines</small>
             </div>
           </div>
 
           <div className="dashboard-stat">
             <span className="dashboard-stat__icon is-purple">
-              <Gauge size={26} />
+              <ListChecks size={26} />
             </span>
             <div>
-              <span>Média por máquina</span>
-              <strong>{mediaFila}</strong>
-              <small>peças aguardando</small>
+              <span>Ordens em andamento</span>
+              <strong>{ordensEmAndamento}</strong>
+              <small>OFs distintas nas filas</small>
             </div>
           </div>
         </section>
@@ -1404,17 +1388,6 @@ export default function Sequenciador6064() {
   );
 }
 
-function extrairLargura(dimensoes: string): number {
-  const partes = dimensoes
-    .replace(",", ".")
-    .split("x")
-    .map((p) => parseFloat(p.trim()));
-
-  if (partes.length < 2) return 0;
-
-  return partes[1] || 0;
-}
-
 function obterTexto(item: LinhaApi, ...campos: string[]): string {
   for (const campo of campos) {
     const valor = item[campo];
@@ -1425,6 +1398,47 @@ function obterTexto(item: LinhaApi, ...campos: string[]): string {
   }
 
   return "";
+}
+
+function normalizarPecaFila(item: LinhaApi): Peca {
+  const dimensoes = obterTexto(item, "dimensoes", "Dimensões");
+  const observacoes = obterTexto(item, "observacoes", "Observações");
+  const ordemMes = obterTexto(
+    item,
+    "ordemMes",
+    "Ordem mes",
+    "Ordem MES",
+    "Ordem Mes"
+  );
+
+  return {
+    desenho: obterTexto(item, "desenho", "Desenho"),
+    descricao: obterTexto(item, "descricao", "Descrição"),
+    dimensoes,
+    largura:
+      typeof item.largura === "number" ? item.largura : extrairLargura(dimensoes),
+    prazo: obterTexto(item, "prazo", "Prazo"),
+    quantidade: obterTexto(item, "quantidade", "Quantidade"),
+    ordem: obterTexto(item, "ordem", "Ordem"),
+    ordemMes,
+    observacoes,
+    material: obterTexto(item, "material", "Material"),
+    urgente:
+      item.urgente === true ||
+      String(item.urgente).toLowerCase() === "true" ||
+      observacoes.toLowerCase().includes("urgente"),
+  };
+}
+
+function extrairLargura(dimensoes: string): number {
+  const partes = dimensoes
+    .replace(",", ".")
+    .split("x")
+    .map((p) => parseFloat(p.trim()));
+
+  if (partes.length < 2) return 0;
+
+  return partes[1] || 0;
 }
 
 function formatarDataHoje() {
