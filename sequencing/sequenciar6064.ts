@@ -55,5 +55,7 @@ function converterData(data: string) {
   if (data === "Amanhã") return 1;
 
   const [dia, mes, ano] = data.split("/").map(Number);
-  return new Date(2000 + ano, mes - 1, dia).getTime();
+  const anoFinal = ano < 100 ? 2000 + ano : ano;
+
+  return new Date(anoFinal, mes - 1, dia).getTime();
 }
