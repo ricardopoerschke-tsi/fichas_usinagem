@@ -9,6 +9,8 @@ type Peca1572 = Peca & {
 };
 
 type GrupoOrdem1572 = {
+  totalPecas: number;
+  pecasUrgentes: number;
   prazo: number;
   ordem: string;
 };
@@ -167,6 +169,20 @@ function prioridadeProcessoExterno1572(peca: Peca) {
   return temProcessoExterno1572(peca) ? 0 : 1;
 }
 
+function prioridadeUrgenciaPeca1572(peca: Peca) {
+  return temObservacaoUrgente1572(peca) ? 0 : 1;
+}
+
+function temObservacaoUrgente1572(peca: Peca) {
+  return normalizarTexto(peca.observacoes).includes("urgente");
+}
+
+function getNivelUrgenciaGrupo1572(grupo: GrupoOrdem1572) {
+  if (grupo.pecasUrgentes === grupo.totalPecas) return 2;
+  if (grupo.pecasUrgentes > 0) return 1;
+  return 0;
+}
+
 function getChaveOrdem(peca: Peca) {
   return normalizarTexto(peca.ordem);
 }
@@ -178,16 +194,24 @@ function criarGruposOrdem(pecas: Peca1572[]) {
   pecas.forEach((peca, index) => {
     const ordem = getChaveOrdem(peca);
     const chave = ordem || `sem-ordem-${index}`;
+    const urgente = temObservacaoUrgente1572(peca);
     const prazo = getPrazoInternoTimestamp(peca);
     const grupoExistente = grupos.get(chave);
 
     chaves.set(peca, chave);
 
     if (!grupoExistente) {
-      grupos.set(chave, { prazo, ordem: ordem || chave });
+      grupos.set(chave, {
+        totalPecas: 1,
+        pecasUrgentes: urgente ? 1 : 0,
+        prazo,
+        ordem: ordem || chave,
+      });
       return;
     }
 
+    grupoExistente.totalPecas += 1;
+    if (urgente) grupoExistente.pecasUrgentes += 1;
     grupoExistente.prazo = Math.min(grupoExistente.prazo, prazo);
   });
 
@@ -204,6 +228,13 @@ export function sequenciar1572(pecas: Peca[]) {
 
     if (!grupoOrdemA || !grupoOrdemB) return 0;
 
+    const nivelUrgenciaA = getNivelUrgenciaGrupo1572(grupoOrdemA);
+    const nivelUrgenciaB = getNivelUrgenciaGrupo1572(grupoOrdemB);
+
+    if (nivelUrgenciaA !== nivelUrgenciaB) {
+      return nivelUrgenciaB - nivelUrgenciaA;
+    }
+
     if (grupoOrdemA.prazo !== grupoOrdemB.prazo) {
       return grupoOrdemA.prazo - grupoOrdemB.prazo;
     }
@@ -211,6 +242,11 @@ export function sequenciar1572(pecas: Peca[]) {
     if (grupoOrdemA.ordem !== grupoOrdemB.ordem) {
       return grupoOrdemA.ordem.localeCompare(grupoOrdemB.ordem);
     }
+
+    const urgenciaPecaA = prioridadeUrgenciaPeca1572(a);
+    const urgenciaPecaB = prioridadeUrgenciaPeca1572(b);
+
+    if (urgenciaPecaA !== urgenciaPecaB) return urgenciaPecaA - urgenciaPecaB;
 
     const processoA = prioridadeProcessoExterno1572(a);
     const processoB = prioridadeProcessoExterno1572(b);
