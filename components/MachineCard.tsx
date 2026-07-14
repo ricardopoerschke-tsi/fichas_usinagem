@@ -18,6 +18,7 @@ const machineTheme: Record<
 > = {
   "6064": { accent: "#2878ff", accentRgb: "40, 120, 255", label: "CNC" },
   "1572": { accent: "#3fc45a", accentRgb: "63, 196, 90", label: "FRESA" },
+  "5759": { accent: "#20b7a8", accentRgb: "32, 183, 168", label: "FRESA" },
   "725": { accent: "#ff7a12", accentRgb: "255, 122, 18", label: "FRESA CNC" },
   "5825": { accent: "#8a4cff", accentRgb: "138, 76, 255", label: "TORNO CNC" },
   "1516": {

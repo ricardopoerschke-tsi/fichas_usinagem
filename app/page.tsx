@@ -58,7 +58,7 @@ type Tema = "dark" | "light";
 type LinhaApi = Partial<Peca> &
   Record<string, string | number | boolean | null | undefined>;
 
-const ordemVisualMaquinas = ["6064", "1572", "725", "5825", "1516"];
+const ordemVisualMaquinas = ["6064", "1572", "5759", "725", "5825", "1516"];
 
 export default function Sequenciador6064() {
   const [pagina, setPagina] = useState<Pagina>("home");

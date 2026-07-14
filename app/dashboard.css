@@ -956,6 +956,11 @@ html[data-theme="light"] .dashboard-footer {
   --machine-page-accent-rgb: 63, 196, 90;
 }
 
+.machine-workspace[data-machine="5759"] {
+  --machine-page-accent: #20b7a8;
+  --machine-page-accent-rgb: 32, 183, 168;
+}
+
 .machine-workspace[data-machine="725"] {
   --machine-page-accent: #ff7a12;
   --machine-page-accent-rgb: 255, 122, 18;
