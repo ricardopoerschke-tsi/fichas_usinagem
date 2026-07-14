@@ -26,6 +26,11 @@ const machineTheme: Record<
     accentRgb: "255, 194, 26",
     label: "MANDRILHADORA",
   },
+  "618": {
+    accent: "#d8a51f",
+    accentRgb: "216, 165, 31",
+    label: "MANDRILHADORA",
+  },
 };
 
 export function MachineCard({

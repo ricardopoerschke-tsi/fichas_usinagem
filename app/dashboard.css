@@ -976,6 +976,11 @@ html[data-theme="light"] .dashboard-footer {
   --machine-page-accent-rgb: 255, 194, 26;
 }
 
+.machine-workspace[data-machine="618"] {
+  --machine-page-accent: #d8a51f;
+  --machine-page-accent-rgb: 216, 165, 31;
+}
+
 .machine-workspace__topbar {
   height: 82px;
   display: flex;
