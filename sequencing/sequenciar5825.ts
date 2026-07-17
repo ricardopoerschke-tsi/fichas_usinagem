@@ -201,53 +201,116 @@ function prioridadeUrgencia(peca: Peca): number {
   return peca.urgente ? 0 : 1;
 }
 
+function compararPecas5825(a: Peca, b: Peca): number {
+  const diametroFinalA = extrairBitola(a.dimensoes);
+  const diametroFinalB = extrairBitola(b.dimensoes);
+
+  const bitolaBrutaA = calcularBitolaBruta(a.material, diametroFinalA);
+  const bitolaBrutaB = calcularBitolaBruta(b.material, diametroFinalB);
+
+  const urgenciaA = prioridadeUrgencia(a);
+  const urgenciaB = prioridadeUrgencia(b);
+
+  const janelaPrazoA = calcularJanelaPrazo(a.prazo);
+  const janelaPrazoB = calcularJanelaPrazo(b.prazo);
+
+  const prazoA = converterDataPrazo(a.prazo);
+  const prazoB = converterDataPrazo(b.prazo);
+
+  const dedicadaA = prioridadeCastanhaDedicada(bitolaBrutaA, a.quantidade);
+  const dedicadaB = prioridadeCastanhaDedicada(bitolaBrutaB, b.quantidade);
+
+  const modeloA = calcularModeloCastanha(bitolaBrutaA);
+  const modeloB = calcularModeloCastanha(bitolaBrutaB);
+
+  const materialA = normalizarTexto(a.material);
+  const materialB = normalizarTexto(b.material);
+
+  if (urgenciaA !== urgenciaB) return urgenciaA - urgenciaB;
+
+  if (janelaPrazoA !== janelaPrazoB)
+    return janelaPrazoA - janelaPrazoB;
+
+  if (dedicadaA !== dedicadaB)
+    return dedicadaA - dedicadaB;
+
+  if (modeloA !== modeloB)
+    return modeloA - modeloB;
+
+  if (prazoA !== prazoB)
+    return prazoA - prazoB;
+
+  const comparacaoMaterial = materialA.localeCompare(materialB);
+  if (comparacaoMaterial !== 0) return comparacaoMaterial;
+
+  if ((bitolaBrutaA ?? 999) !== (bitolaBrutaB ?? 999)) {
+    return (bitolaBrutaA ?? 999) - (bitolaBrutaB ?? 999);
+  }
+
+  return (diametroFinalA ?? 999) - (diametroFinalB ?? 999);
+}
+
+function menorPrazoDoGrupo(grupo: Peca[]): number {
+  return grupo.reduce(
+    (menorPrazo, peca) => Math.min(menorPrazo, converterDataPrazo(peca.prazo)),
+    Number.MAX_SAFE_INTEGER
+  );
+}
+
+function ordemValida(ordem?: string): string | null {
+  const ordemNormalizada = normalizarTexto(ordem);
+
+  if (
+    !ordemNormalizada ||
+    ordemNormalizada === "-" ||
+    ordemNormalizada === "SEM OF"
+  ) {
+    return null;
+  }
+
+  return ordem?.trim() ?? null;
+}
+
 export function sequenciar5825(pecas: Peca[]): Peca[] {
-  return [...pecas].sort((a, b) => {
-    const diametroFinalA = extrairBitola(a.dimensoes);
-    const diametroFinalB = extrairBitola(b.dimensoes);
+  const grupos = new Map<string, Peca[]>();
 
-    const bitolaBrutaA = calcularBitolaBruta(a.material, diametroFinalA);
-    const bitolaBrutaB = calcularBitolaBruta(b.material, diametroFinalB);
+  pecas.forEach((peca, index) => {
+    const ordem = ordemValida(peca.ordem);
+    const chave =
+      ordem === null ? "SEM-ORDEM-" + index : "ORDEM-" + ordem;
+    const grupo = grupos.get(chave);
 
-    const urgenciaA = prioridadeUrgencia(a);
-    const urgenciaB = prioridadeUrgencia(b);
+    if (grupo) {
+      grupo.push(peca);
+    } else {
+      grupos.set(chave, [peca]);
+    }
+  });
 
-    const janelaPrazoA = calcularJanelaPrazo(a.prazo);
-    const janelaPrazoB = calcularJanelaPrazo(b.prazo);
+  const gruposOrdenados = Array.from(grupos.values()).map((grupo, index) => ({
+    pecas: [...grupo].sort(compararPecas5825),
+    indiceOriginal: index,
+  }));
 
-    const prazoA = converterDataPrazo(a.prazo);
-    const prazoB = converterDataPrazo(b.prazo);
-
-    const dedicadaA = prioridadeCastanhaDedicada(bitolaBrutaA, a.quantidade);
-    const dedicadaB = prioridadeCastanhaDedicada(bitolaBrutaB, b.quantidade);
-
-    const modeloA = calcularModeloCastanha(bitolaBrutaA);
-    const modeloB = calcularModeloCastanha(bitolaBrutaB);
-
-    const materialA = normalizarTexto(a.material);
-    const materialB = normalizarTexto(b.material);
+  gruposOrdenados.sort((a, b) => {
+    const urgenciaA = a.pecas.some((peca) => peca.urgente) ? 0 : 1;
+    const urgenciaB = b.pecas.some((peca) => peca.urgente) ? 0 : 1;
 
     if (urgenciaA !== urgenciaB) return urgenciaA - urgenciaB;
 
-    if (janelaPrazoA !== janelaPrazoB)
-      return janelaPrazoA - janelaPrazoB;
+    const menorPrazoA = menorPrazoDoGrupo(a.pecas);
+    const menorPrazoB = menorPrazoDoGrupo(b.pecas);
 
-    if (dedicadaA !== dedicadaB)
-      return dedicadaA - dedicadaB;
+    if (menorPrazoA !== menorPrazoB) return menorPrazoA - menorPrazoB;
 
-    if (modeloA !== modeloB)
-      return modeloA - modeloB;
+    const comparacaoPrimeirasPecas = compararPecas5825(
+      a.pecas[0],
+      b.pecas[0]
+    );
+    if (comparacaoPrimeirasPecas !== 0) return comparacaoPrimeirasPecas;
 
-    if (prazoA !== prazoB)
-      return prazoA - prazoB;
-
-    const comparacaoMaterial = materialA.localeCompare(materialB);
-    if (comparacaoMaterial !== 0) return comparacaoMaterial;
-
-    if ((bitolaBrutaA ?? 999) !== (bitolaBrutaB ?? 999)) {
-      return (bitolaBrutaA ?? 999) - (bitolaBrutaB ?? 999);
-    }
-
-    return (diametroFinalA ?? 999) - (diametroFinalB ?? 999);
+    return a.indiceOriginal - b.indiceOriginal;
   });
+
+  return gruposOrdenados.flatMap((grupo) => grupo.pecas);
 }
