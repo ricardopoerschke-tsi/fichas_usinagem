@@ -1,9 +1,10 @@
 import { Peca } from "@/types/peca";
 import {
+  dataInicioHoje,
   normalizarTexto,
   prazoInternoTimestamp,
-  prioridadeProcessoAdicional,
-  prioridadeUrgenciaProdutiva,
+  temProcessoAdicional,
+  temUrgenciaProdutiva,
 } from "./regrasFluxoProdutivo";
 
 type Ferramenta1516 = 63 | 100 | 125;
@@ -58,16 +59,32 @@ function grupoPrazo(peca: Peca): number {
   return prazoInternoTimestamp(peca.prazo, DIAS_ANTECIPACAO_1516);
 }
 
+function temUrgenciaManual(peca: Peca): boolean {
+  return normalizarTexto(peca.observacoes).includes("urgente");
+}
+
+function prioridade1516(peca: Peca): number {
+  if (temUrgenciaManual(peca)) return 0;
+
+  const processoAdicional = temProcessoAdicional(peca);
+  const urgenciaProdutiva = temUrgenciaProdutiva(
+    peca,
+    DIAS_ANTECIPACAO_1516
+  );
+  const prazoInternoVencido = grupoPrazo(peca) < dataInicioHoje();
+
+  if (processoAdicional && urgenciaProdutiva) return 1;
+  if (prazoInternoVencido) return 2;
+  if (processoAdicional) return 3;
+
+  return 4;
+}
+
 function ordenar1516(a: Peca, b: Peca): number {
-  const urgenteA = prioridadeUrgenciaProdutiva(a, DIAS_ANTECIPACAO_1516);
-  const urgenteB = prioridadeUrgenciaProdutiva(b, DIAS_ANTECIPACAO_1516);
+  const prioridadeA = prioridade1516(a);
+  const prioridadeB = prioridade1516(b);
 
-  if (urgenteA !== urgenteB) return urgenteA - urgenteB;
-
-  const processoA = prioridadeProcessoAdicional(a);
-  const processoB = prioridadeProcessoAdicional(b);
-
-  if (processoA !== processoB) return processoA - processoB;
+  if (prioridadeA !== prioridadeB) return prioridadeA - prioridadeB;
 
   const prazoA = grupoPrazo(a);
   const prazoB = grupoPrazo(b);
