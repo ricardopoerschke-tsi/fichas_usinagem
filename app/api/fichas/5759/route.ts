@@ -5,9 +5,9 @@ const SHEET_ID = "11T23VDaDuo001eioqpcYVdQhTVUBMAoqKLXTx0j1rv0";
 const SHEET_NAME = "5759";
 
 export async function GET() {
-  // A exportacao CSV preserva valores alfanumericos em colunas que tambem
-  // contem numeros. O endpoint gviz infere o tipo da coluna e descartava M2.
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(SHEET_NAME)}`;
+  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(
+    SHEET_NAME
+  )}`;
 
   const response = await fetch(url, {
     cache: "no-store",
@@ -28,4 +28,9 @@ export async function GET() {
   });
 
   return NextResponse.json(parsed.data);
+}
+
+export async function POST(request: Request) {
+  // Aqui deve entrar a mesma implementação usada
+  // no POST da máquina 1572.
 }
