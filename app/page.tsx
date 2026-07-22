@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
@@ -80,7 +80,7 @@ export default function Sequenciador6064() {
       const temaSalvo = window.localStorage.getItem("fichas-usinagem-tema");
       const temaInicial: Tema = temaSalvo === "light" ? "light" : "dark";
 
-      // A leitura ocorre uma Ãºnica vez para refletir a preferÃªncia persistida.
+      // A leitura ocorre uma única vez para refletir a preferência persistida.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTema(temaInicial);
       document.documentElement.dataset.theme = temaInicial;
@@ -111,7 +111,7 @@ export default function Sequenciador6064() {
           )
         );
       } catch (error) {
-        console.error("Erro ao carregar filas das mÃ¡quinas:", error);
+        console.error("Erro ao carregar filas das máquinas:", error);
       }
     }
 
@@ -140,11 +140,11 @@ export default function Sequenciador6064() {
         const response = await fetch(maquinaSelecionada.apiHistorico);
         const data = await response.json();
         const convertido: Peca[] = data.map((item: LinhaApi) => {
-          const dimensoes = obterTexto(item, "dimensoes", "DimensÃµes");
+          const dimensoes = obterTexto(item, "dimensoes", "Dimensões");
 
           return {
             desenho: obterTexto(item, "desenho", "Desenho"),
-            descricao: obterTexto(item, "descricao", "DescriÃ§Ã£o"),
+            descricao: obterTexto(item, "descricao", "Descrição"),
             dimensoes,
             largura: extrairLargura(dimensoes),
             prazo: obterTexto(item, "prazo", "Prazo"),
@@ -153,21 +153,21 @@ export default function Sequenciador6064() {
             observacoes: obterTexto(
               item,
               "observacoes",
-              "ObservaÃ§Ãµes"
+              "Observações"
             ),
             material: obterTexto(item, "material", "Material"),
             urgente: false,
             dataProduzido: obterTexto(
               item,
               "dataProduzido",
-              "Data ProduÃ§Ã£o"
+              "Data Produção"
             ),
           };
         });
 
         setHistorico(convertido);
       } catch (error) {
-        console.error("Erro ao carregar histÃ³rico:", error);
+        console.error("Erro ao carregar histórico:", error);
       }
     }
 
@@ -180,7 +180,7 @@ export default function Sequenciador6064() {
       maquinaSelecionada.id
     );
 
-    // O congelamento pertence Ã  mÃ¡quina selecionada e Ã© restaurado ao acessÃ¡-la.
+    // O congelamento pertence à máquina selecionada e é restaurado ao acessá-la.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setCongelamento(congelamentoSalvo);
     setReferenciaParaCongelar("");
@@ -236,7 +236,7 @@ export default function Sequenciador6064() {
     try {
       window.localStorage.setItem("fichas-usinagem-tema", novoTema);
     } catch {
-      // O tema continua aplicado durante a sessÃ£o quando o armazenamento estÃ¡ indisponÃ­vel.
+      // O tema continua aplicado durante a sessão quando o armazenamento está indisponível.
     }
   }
 
@@ -254,14 +254,14 @@ export default function Sequenciador6064() {
           />
         </div>
 
-        <nav className="dashboard-nav" aria-label="NavegaÃ§Ã£o principal">
+        <nav className="dashboard-nav" aria-label="Navegação principal">
           <button
             type="button"
             className={`dashboard-nav__item ${ativo === "home" ? "is-active" : ""}`}
             onClick={() => setPagina("home")}
           >
             <Home size={20} strokeWidth={1.9} />
-            <span>InÃ­cio</span>
+            <span>Início</span>
           </button>
           <button
             type="button"
@@ -269,7 +269,7 @@ export default function Sequenciador6064() {
             onClick={() => setPagina("home")}
           >
             <LayoutGrid size={20} strokeWidth={1.9} />
-            <span>MÃ¡quinas</span>
+            <span>Máquinas</span>
           </button>
           <button
             type="button"
@@ -277,14 +277,14 @@ export default function Sequenciador6064() {
             onClick={() => setPagina("configuracoes")}
           >
             <Settings size={20} strokeWidth={1.9} />
-            <span>ConfiguraÃ§Ãµes</span>
+            <span>Configurações</span>
           </button>
         </nav>
 
         <div className="dashboard-sidebar__flow">
-          <span>Fluxo disponÃ­vel</span>
+          <span>Fluxo disponível</span>
           <p>
-            Selecione uma mÃ¡quina para criar ou consultar sequÃªncias, histÃ³rico
+            Selecione uma máquina para criar ou consultar sequências, histórico
             e produzidas.
           </p>
         </div>
@@ -316,7 +316,7 @@ export default function Sequenciador6064() {
 
     if (!resultado.referenciaEncontrada) {
       alert(
-        "A peÃ§a usada como limite do congelamento nÃ£o foi localizada. A sequÃªncia nÃ£o foi alterada. Descongele a sequÃªncia ou verifique os dados da peÃ§a."
+        "A peça usada como limite do congelamento não foi localizada. A sequência não foi alterada. Descongele a sequência ou verifique os dados da peça."
       );
       setPagina("editarSequencia");
       return;
@@ -343,7 +343,7 @@ export default function Sequenciador6064() {
         destino <= limiteCongelado)
     ) {
       alert(
-        "A sequÃªncia estÃ¡ congelada. NÃ£o Ã© permitido mover peÃ§as para dentro ou para fora da Ã¡rea congelada."
+        "A sequência está congelada. Não é permitido mover peças para dentro ou para fora da área congelada."
       );
       setDragIndex(null);
       return;
@@ -371,7 +371,7 @@ export default function Sequenciador6064() {
     );
 
     if (!peca) {
-      alert("Selecione a Ãºltima peÃ§a que jÃ¡ foi liberada ao operador.");
+      alert("Selecione a última peça que já foi liberada ao operador.");
       return;
     }
 
@@ -379,7 +379,7 @@ export default function Sequenciador6064() {
 
     if (!referenciaPecaValida(ultimaPeca)) {
       alert(
-        "NÃ£o Ã© possÃ­vel congelar esta peÃ§a porque Desenho e Ordem MES sÃ£o obrigatÃ³rios para formar a chave Ãºnica."
+        "Não é possível congelar esta peça porque Desenho e Ordem MES são obrigatórios para formar a chave única."
       );
       return;
     }
@@ -436,11 +436,11 @@ export default function Sequenciador6064() {
         const mensagem =
           result?.error || result?.details || "Resposta invalida da API";
 
-        alert(`Erro ao salvar sequÃªncia: ${mensagem}`);
+        alert(`Erro ao salvar sequência: ${mensagem}`);
         return;
       }
 
-      alert("SequÃªncia salva com sucesso!");
+      alert("Sequência salva com sucesso!");
     } catch (error) {
       console.error("Falha ao persistir a sequencia", {
         error,
@@ -448,7 +448,7 @@ export default function Sequenciador6064() {
         sequencia: payload,
       });
 
-      alert("Erro ao salvar sequÃªncia");
+      alert("Erro ao salvar sequência");
     }
   }
 
@@ -496,14 +496,14 @@ export default function Sequenciador6064() {
 
       setSelecionadas([]);
 
-      alert(`PeÃ§as produzidas movidas para o histÃ³rico: ${result.movidas}`);
+      alert(`Peças produzidas movidas para o histórico: ${result.movidas}`);
     } catch (error) {
       console.error(error);
-      alert("Erro ao marcar peÃ§as como produzidas");
+      alert("Erro ao marcar peças como produzidas");
     }
   }
   function getSetupLabel(peca: Peca) {
-    return peca.largura <= 400 ? "Morsa" : "VÃ¡cuo";
+    return peca.largura <= 400 ? "Morsa" : "Vácuo";
   }
 
   function usaSetupMorsaVacuo(maquinaId: string) {
@@ -518,9 +518,9 @@ export default function Sequenciador6064() {
         <main className="dashboard-main settings-main">
           <header className="dashboard-header">
             <div>
-              <span className="dashboard-eyebrow">PreferÃªncias visuais</span>
-              <h1>ConfiguraÃ§Ãµes</h1>
-              <p>Personalize somente a aparÃªncia do sistema.</p>
+              <span className="dashboard-eyebrow">Preferências visuais</span>
+              <h1>Configurações</h1>
+              <p>Personalize somente a aparência do sistema.</p>
             </div>
 
             <div className="dashboard-header__status">
@@ -540,8 +540,8 @@ export default function Sequenciador6064() {
                 <Palette size={25} />
               </span>
               <div>
-                <h2>AparÃªncia da interface</h2>
-                <p>Escolha o tema que serÃ¡ usado neste navegador.</p>
+                <h2>Aparência da interface</h2>
+                <p>Escolha o tema que será usado neste navegador.</p>
               </div>
             </div>
 
@@ -566,7 +566,7 @@ export default function Sequenciador6064() {
                   <small>Visual atual aprovado, com fundo azul-escuro.</small>
                 </span>
                 <span className="theme-option__check" aria-hidden="true">
-                  âœ“
+                  ✓
                 </span>
               </button>
 
@@ -590,18 +590,18 @@ export default function Sequenciador6064() {
                   <small>Fundo claro, cards brancos e azul Tramontina.</small>
                 </span>
                 <span className="theme-option__check" aria-hidden="true">
-                  âœ“
+                  ✓
                 </span>
               </button>
             </div>
 
             <div className="appearance-panel__note">
-              A preferÃªncia Ã© salva automaticamente neste navegador.
+              A preferência é salva automaticamente neste navegador.
             </div>
           </section>
 
           <footer className="dashboard-footer">
-            Â© 2026 Tramontina Â· Fichas de Usinagem
+            © 2026 Tramontina · Fichas de Usinagem
           </footer>
         </main>
       </div>
@@ -636,13 +636,13 @@ export default function Sequenciador6064() {
         <main className="machine-workspace__content flow-workspace__content">
           <header className="flow-header">
             <div>
-              <span className="flow-header__eyebrow">Registros concluÃ­dos</span>
-              <h1>HistÃ³rico - {maquina.numero} {maquina.nome}</h1>
-              <p>Consulta das peÃ§as jÃ¡ produzidas, com data de sequenciamento e data de conclusÃ£o.</p>
+              <span className="flow-header__eyebrow">Registros concluídos</span>
+              <h1>Histórico - {maquina.numero} {maquina.nome}</h1>
+              <p>Consulta das peças já produzidas, com data de sequenciamento e data de conclusão.</p>
             </div>
 
             <div className="flow-header__summary">
-              <span>Produzidas no histÃ³rico</span>
+              <span>Produzidas no histórico</span>
               <strong>{historico.length}</strong>
             </div>
           </header>
@@ -652,7 +652,7 @@ export default function Sequenciador6064() {
               <span className="flow-empty-state__icon">
                 <History size={29} />
               </span>
-              Nenhuma peÃ§a produzida registrada no histÃ³rico.
+              Nenhuma peça produzida registrada no histórico.
             </div>
           ) : (
             <div className="history-list">
@@ -666,14 +666,14 @@ export default function Sequenciador6064() {
                   </span>
 
                   <div className="history-card__identity">
-                    <span>PeÃ§a produzida</span>
+                    <span>Peça produzida</span>
                     <h2>{peca.desenho} - {peca.descricao}</h2>
                   </div>
 
                   <div className="history-card__metadata">
                     <div>
                       <span>Sequenciado em</span>
-                      <strong>{peca.dataSequenciamento || "â€”"}</strong>
+                      <strong>{peca.dataSequenciamento || "—"}</strong>
                     </div>
                     <div>
                       <span>Produzido em</span>
@@ -690,8 +690,8 @@ export default function Sequenciador6064() {
                           }`}
                         >
                           {getSetupLabel(peca) === "Morsa"
-                            ? "ðŸ”µ Morsa"
-                            : "ðŸŸ¢ VÃ¡cuo"}
+                            ? "🔵 Morsa"
+                            : "🟢 Vácuo"}
                         </strong>
                       </div>
                     )}
@@ -702,7 +702,7 @@ export default function Sequenciador6064() {
           )}
 
           <footer className="dashboard-footer">
-            Â© 2026 Tramontina Â· Fichas de Usinagem
+            © 2026 Tramontina · Fichas de Usinagem
           </footer>
         </main>
       </div>
@@ -762,31 +762,31 @@ export default function Sequenciador6064() {
           <header className="sequence-header">
             <div className="sequence-header__identity">
               <span className="flow-header__eyebrow">
-                {modoEdicao ? "OrganizaÃ§Ã£o da produÃ§Ã£o" : "Modo de produÃ§Ã£o"}
+                {modoEdicao ? "Organização da produção" : "Modo de produção"}
               </span>
               <h1>
                 {modoEdicao
-                  ? `Editar sequÃªncia - ${maquina.numero} ${maquina.nome}`
-                  : `Ver sequÃªncia - ${maquina.numero} ${maquina.nome}`}
+                  ? `Editar sequência - ${maquina.numero} ${maquina.nome}`
+                  : `Ver sequência - ${maquina.numero} ${maquina.nome}`}
               </h1>
               <p>
                 {modoEdicao
-                  ? "Arraste uma peÃ§a para cima ou para baixo para ajustar a ordem manualmente."
-                  : "Modo de produÃ§Ã£o. Selecione os itens finalizados para enviar ao histÃ³rico."}
+                  ? "Arraste uma peça para cima ou para baixo para ajustar a ordem manualmente."
+                  : "Modo de produção. Selecione os itens finalizados para enviar ao histórico."}
               </p>
             </div>
 
             <div className="sequence-header__controls">
               <div className="sequence-header__status">
-                <span>PeÃ§as pendentes</span>
+                <span>Peças pendentes</span>
                 <strong>{sequencia.length}</strong>
               </div>
 
               {usaSetupMorsaVacuo(maquinaSelecionada.id) && (
                 <div className="sequence-header__setup">
-                  <span>Setup considerado na sequÃªncia</span>
+                  <span>Setup considerado na sequência</span>
                   <strong>
-                    {setupAtual === "morsa" ? "Morsa" : "Mesa de vÃ¡cuo"}
+                    {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}
                   </strong>
                 </div>
               )}
@@ -798,7 +798,7 @@ export default function Sequenciador6064() {
                   className="flow-button is-primary"
                 >
                   <ListChecks size={18} />
-                  Salvar sequÃªncia
+                  Salvar sequência
                 </button>
               )}
 
@@ -810,7 +810,7 @@ export default function Sequenciador6064() {
                     className="flow-button is-secondary"
                   >
                     <Printer size={18} />
-                    Imprimir sequÃªncia
+                    Imprimir sequência
                   </button>
 
                   <button
@@ -844,8 +844,8 @@ export default function Sequenciador6064() {
             {congelamento ? (
               <>
                 <div className="sequence-freeze-panel__content">
-                  <strong>ðŸ”’ SequÃªncia congelada</strong>
-                  <span>AtÃ© a peÃ§a liberada ao operador</span>
+                  <strong>🔒 Sequência congelada</strong>
+                  <span>Até a peça liberada ao operador</span>
                 </div>
 
                 <dl className="sequence-freeze-panel__details">
@@ -858,11 +858,11 @@ export default function Sequenciador6064() {
                     <dd>{congelamento.ultimaPeca.ordemMes}</dd>
                   </div>
                   <div>
-                    <dt>PosiÃ§Ã£o atual</dt>
+                    <dt>Posição atual</dt>
                     <dd>
                       {referenciaCongeladaEncontrada
                         ? limiteCongelado + 1
-                        : "NÃ£o localizada"}
+                        : "Não localizada"}
                     </dd>
                   </div>
                 </dl>
@@ -873,28 +873,28 @@ export default function Sequenciador6064() {
                   className="flow-button is-secondary"
                 >
                   <UnlockKeyhole size={18} />
-                  Descongelar sequÃªncia
+                  Descongelar sequência
                 </button>
               </>
             ) : (
               <>
                 <div className="sequence-freeze-panel__content">
-                  <strong>Congelar programaÃ§Ã£o liberada</strong>
+                  <strong>Congelar programação liberada</strong>
                   <span>
-                    Selecione a Ãºltima peÃ§a entregue ao operador. O limite serÃ¡
+                    Selecione a última peça entregue ao operador. O limite será
                     salvo por Desenho + Ordem MES.
                   </span>
                 </div>
 
                 <label className="sequence-freeze-panel__selector">
-                  <span>Ãšltima peÃ§a liberada</span>
+                  <span>Última peça liberada</span>
                   <select
                     value={referenciaParaCongelar}
                     onChange={(event) =>
                       setReferenciaParaCongelar(event.target.value)
                     }
                   >
-                    <option value="">Selecione uma peÃ§a</option>
+                    <option value="">Selecione uma peça</option>
                     {sequencia.map((peca, index) => {
                       const referencia = criarReferenciaPeca(peca);
                       const chave = obterChavePeca(peca);
@@ -910,8 +910,8 @@ export default function Sequenciador6064() {
                           value={chave}
                           disabled={!podeCongelar}
                         >
-                          {index + 1} â€” {peca.desenho || "Sem desenho"} â€” MES{" "}
-                          {peca.ordemMes?.trim() || "nÃ£o informada"}
+                          {index + 1} — {peca.desenho || "Sem desenho"} — MES{" "}
+                          {peca.ordemMes?.trim() || "não informada"}
                           {referenciaDuplicada
                             ? " (chave duplicada)"
                             : !podeCongelar
@@ -930,42 +930,42 @@ export default function Sequenciador6064() {
                   className="flow-button is-primary"
                 >
                   <LockKeyhole size={18} />
-                  Congelar sequÃªncia
+                  Congelar sequência
                 </button>
               </>
             )}
 
             {!referenciaCongeladaEncontrada && (
               <p className="sequence-freeze-panel__error">
-                A peÃ§a de referÃªncia nÃ£o estÃ¡ na fila atual. Por seguranÃ§a, o
-                sequenciamento e a movimentaÃ§Ã£o manual permanecem bloqueados.
+                A peça de referência não está na fila atual. Por segurança, o
+                sequenciamento e a movimentação manual permanecem bloqueados.
               </p>
             )}
           </section>
 
           <div className="print-header hidden">
-            <h1>SequÃªncia {maquina.numero} - {maquina.nome}</h1>
-            <p>Setup considerado: {setupAtual === "morsa" ? "Morsa" : "Mesa de vÃ¡cuo"}</p>
-            <p>PeÃ§as pendentes: {sequencia.length}</p>
-            <p>Data de impressÃ£o: {formatarDataHoje()}</p>
+            <h1>Sequência {maquina.numero} - {maquina.nome}</h1>
+            <p>Setup considerado: {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}</p>
+            <p>Peças pendentes: {sequencia.length}</p>
+            <p>Data de impressão: {formatarDataHoje()}</p>
           </div>
 
           <div className="print-list hidden">
             <div className="print-row print-row-header">
-              <span>â˜</span>
-              <span>NÂº</span>
+              <span>☐</span>
+              <span>Nº</span>
               <span>Desenho</span>
               <span>Ordem MES</span>
-              <span>DescriÃ§Ã£o</span>
+              <span>Descrição</span>
               <span>Ordem</span>
               <span>Material</span>
-              <span>DimensÃµes</span>
+              <span>Dimensões</span>
               <span>Qtd</span>
             </div>
 
             {sequencia.map((peca, index) => (
               <div key={`print-${peca.desenho}-${index}`} className="print-row">
-                <span>â˜</span>
+                <span>☐</span>
                 <span>{String(index + 1).padStart(2, "0")}</span>
                 <span>{peca.desenho}</span>
                 <span>{peca.ordemMes?.trim() || "-"}</span>
@@ -1053,7 +1053,7 @@ export default function Sequenciador6064() {
                             </span>
                           )}
                         </div>
-                        <p>DimensÃµes: {peca.dimensoes}</p>
+                        <p>Dimensões: {peca.dimensoes}</p>
                         {peca.ordem &&
                           contagemOF[peca.ordem] > 1 &&
                           peca.ordem !== "-" &&
@@ -1080,8 +1080,8 @@ export default function Sequenciador6064() {
                             }`}
                           >
                             {getSetupLabel(peca) === "Morsa"
-                              ? "ðŸ”µ Morsa"
-                              : "ðŸŸ¢ VÃ¡cuo"}
+                              ? "🔵 Morsa"
+                              : "🟢 Vácuo"}
                           </strong>
                         </div>
                       )}
@@ -1103,7 +1103,7 @@ export default function Sequenciador6064() {
                           </span>
                         ) : (
                           <span className="sequence-editing-badge">
-                            EdiÃ§Ã£o ativa
+                            Edição ativa
                           </span>
                         )}
                       </div>
@@ -1115,7 +1115,7 @@ export default function Sequenciador6064() {
           </div>
 
           <footer className="dashboard-footer">
-            Â© 2026 Tramontina Â· Fichas de Usinagem
+            © 2026 Tramontina · Fichas de Usinagem
           </footer>
         </main>
       </div>
@@ -1159,7 +1159,7 @@ export default function Sequenciador6064() {
 
             <div className="machine-hero__identity">
               <span className="machine-hero__eyebrow">
-                MÃ¡quina selecionada
+                Máquina selecionada
               </span>
               <div className="machine-hero__title-line">
                 <span className="machine-hero__number">{maquina.numero}</span>
@@ -1171,7 +1171,7 @@ export default function Sequenciador6064() {
 
               <div className="machine-hero__details">
                 <span>
-                  Material padrÃ£o
+                  Material padrão
                   <strong>{maquina.material}</strong>
                 </span>
                 <span>
@@ -1196,21 +1196,21 @@ export default function Sequenciador6064() {
                   }
                 >
                   <option value="morsa">Morsa</option>
-                  <option value="vacuo">Mesa de vÃ¡cuo</option>
+                  <option value="vacuo">Mesa de vácuo</option>
                 </select>
               </div>
             )}
           </section>
 
-          <section className="machine-summary" aria-label="Resumo da mÃ¡quina">
+          <section className="machine-summary" aria-label="Resumo da máquina">
             <div className="machine-summary__card">
               <span className="machine-summary__icon is-blue">
                 <ListChecks size={27} />
               </span>
               <div>
-                <span>PeÃ§as na fila</span>
+                <span>Peças na fila</span>
                 <strong>{maquina.fila}</strong>
-                <small>Aguardando produÃ§Ã£o</small>
+                <small>Aguardando produção</small>
               </div>
             </div>
 
@@ -1219,9 +1219,9 @@ export default function Sequenciador6064() {
                 <CheckCircle2 size={27} />
               </span>
               <div>
-                <span>Produzidas no histÃ³rico</span>
+                <span>Produzidas no histórico</span>
                 <strong>{historico.length}</strong>
-                <small>Registros concluÃ­dos</small>
+                <small>Registros concluídos</small>
               </div>
             </div>
           </section>
@@ -1229,23 +1229,23 @@ export default function Sequenciador6064() {
           <section className="machine-actions-section">
             <div className="machine-actions-section__heading">
               <div>
-                <span className="dashboard-eyebrow">OperaÃ§Ãµes</span>
-                <h2>AÃ§Ãµes da mÃ¡quina</h2>
+                <span className="dashboard-eyebrow">Operações</span>
+                <h2>Ações da máquina</h2>
               </div>
-              <p>Escolha uma opÃ§Ã£o para continuar.</p>
+              <p>Escolha uma opção para continuar.</p>
             </div>
 
             <div className="machine-actions-grid">
               <ActionCard icon={<PlusCircle />} title="Adicionar fichas" description="Enviar fotos ou importar da planilha." />
-              <ActionCard icon={<ListChecks />} title="Criar sequÃªncia" description="Gerar sugestÃ£o usando setup, urgÃªncia e prazo." onClick={criarSequencia} />
-              <ActionCard icon={<Edit3 />} title="Editar sequÃªncia" description="Arrastar peÃ§as para ajustar posiÃ§Ã£o." onClick={() => setPagina("editarSequencia")} />
-              <ActionCard icon={<Eye />} title="Ver sequÃªncia" description="Selecionar produzidas e consultar fila." onClick={() => setPagina("verSequencia")} />
-              <ActionCard icon={<History />} title="HistÃ³rico" description="Consultar peÃ§as produzidas." onClick={() => setPagina("historico")} />
+              <ActionCard icon={<ListChecks />} title="Criar sequência" description="Gerar sugestão usando setup, urgência e prazo." onClick={criarSequencia} />
+              <ActionCard icon={<Edit3 />} title="Editar sequência" description="Arrastar peças para ajustar posição." onClick={() => setPagina("editarSequencia")} />
+              <ActionCard icon={<Eye />} title="Ver sequência" description="Selecionar produzidas e consultar fila." onClick={() => setPagina("verSequencia")} />
+              <ActionCard icon={<History />} title="Histórico" description="Consultar peças produzidas." onClick={() => setPagina("historico")} />
             </div>
           </section>
 
           <footer className="dashboard-footer">
-            Â© 2026 Tramontina Â· Fichas de Usinagem
+            © 2026 Tramontina · Fichas de Usinagem
           </footer>
         </main>
       </div>
@@ -1260,8 +1260,8 @@ export default function Sequenciador6064() {
         <header className="dashboard-header">
           <div>
             <span className="dashboard-eyebrow">Fichas de usinagem</span>
-            <h1>MÃ¡quinas</h1>
-            <p>Selecione uma mÃ¡quina para visualizar e organizar as fichas.</p>
+            <h1>Máquinas</h1>
+            <p>Selecione uma máquina para visualizar e organizar as fichas.</p>
           </div>
 
           <div className="dashboard-header__status">
@@ -1270,7 +1270,7 @@ export default function Sequenciador6064() {
             </span>
             <div>
               <span>Status do painel</span>
-              <strong>OperaÃ§Ã£o conectada</strong>
+              <strong>Operação conectada</strong>
             </div>
           </div>
         </header>
@@ -1301,15 +1301,15 @@ export default function Sequenciador6064() {
           </div>
         </section>
 
-        <section className="dashboard-stats" aria-label="Resumo das mÃ¡quinas">
+        <section className="dashboard-stats" aria-label="Resumo das máquinas">
           <div className="dashboard-stat">
             <span className="dashboard-stat__icon is-blue">
               <Boxes size={26} />
             </span>
             <div>
-              <span>PeÃ§as aguardando</span>
+              <span>Peças aguardando</span>
               <strong>{totalFila}</strong>
-              <small>nas filas das mÃ¡quinas</small>
+              <small>nas filas das máquinas</small>
             </div>
           </div>
 
@@ -1318,7 +1318,7 @@ export default function Sequenciador6064() {
               <AlertTriangle size={26} />
             </span>
             <div>
-              <span>PeÃ§as urgentes</span>
+              <span>Peças urgentes</span>
               <strong>{pecasUrgentes}</strong>
               <small>classificadas como urgentes</small>
             </div>
@@ -1329,7 +1329,7 @@ export default function Sequenciador6064() {
               <CircleCheck size={26} />
             </span>
             <div>
-              <span>MÃ¡quinas cadastradas</span>
+              <span>Máquinas cadastradas</span>
               <strong>{machines.length}</strong>
               <small>em lib/machines</small>
             </div>
@@ -1354,22 +1354,22 @@ export default function Sequenciador6064() {
 
           <div className="dashboard-updates__content">
             <div>
-              <span className="dashboard-eyebrow">VisÃ£o geral</span>
-              <h2>AtualizaÃ§Ãµes do sistema</h2>
+              <span className="dashboard-eyebrow">Visão geral</span>
+              <h2>Atualizações do sistema</h2>
             </div>
 
             <ul>
               <li>
                 <span />
-                Filas das {machines.length} mÃ¡quinas carregadas no painel
+                Filas das {machines.length} máquinas carregadas no painel
               </li>
               <li>
                 <span />
-                {totalFila} peÃ§as aguardando sequenciamento ou produÃ§Ã£o
+                {totalFila} peças aguardando sequenciamento ou produção
               </li>
               <li>
                 <span />
-                HistÃ³rico e produzidas disponÃ­veis apÃ³s selecionar a mÃ¡quina
+                Histórico e produzidas disponíveis após selecionar a máquina
               </li>
             </ul>
           </div>
@@ -1381,7 +1381,7 @@ export default function Sequenciador6064() {
         </section>
 
         <footer className="dashboard-footer">
-          Â© 2026 Tramontina Â· Fichas de Usinagem
+          © 2026 Tramontina · Fichas de Usinagem
         </footer>
       </main>
     </div>
@@ -1401,8 +1401,8 @@ function obterTexto(item: LinhaApi, ...campos: string[]): string {
 }
 
 function normalizarPecaFila(item: LinhaApi): Peca {
-  const dimensoes = obterTexto(item, "dimensoes", "DimensÃµes");
-  const observacoes = obterTexto(item, "observacoes", "ObservaÃ§Ãµes");
+  const dimensoes = obterTexto(item, "dimensoes", "Dimensões");
+  const observacoes = obterTexto(item, "observacoes", "Observações");
   const ordemMes = obterTexto(
     item,
     "ordemMes",
@@ -1413,7 +1413,7 @@ function normalizarPecaFila(item: LinhaApi): Peca {
 
   return {
     desenho: obterTexto(item, "desenho", "Desenho"),
-    descricao: obterTexto(item, "descricao", "DescriÃ§Ã£o"),
+    descricao: obterTexto(item, "descricao", "Descrição"),
     dimensoes,
     largura:
       typeof item.largura === "number" ? item.largura : extrairLargura(dimensoes),
