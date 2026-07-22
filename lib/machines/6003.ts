@@ -3,7 +3,7 @@
 export const machine6003: Machine = {
   id: "6003",
   numero: "6003",
-  nome: "6003",
+  nome: "Womat 2",
   tipo: "Fresadora CNC",
   material: "A\u00e7o",
 
