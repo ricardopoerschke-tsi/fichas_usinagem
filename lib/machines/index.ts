@@ -1,10 +1,11 @@
-import { machine6064 } from "./6064";
+﻿import { machine6064 } from "./6064";
 import { machine5825 } from "./5825";
 import { machine1572 } from "./1572";
 import { machine5759 } from "./5759";
 import { machine1516 } from "./1516";
 import { machine618 } from "./618";
 import { machine725 } from "./725";
+import { machine6003 } from "./6003";
 
 export const machines = [
   machine6064,
@@ -14,6 +15,7 @@ export const machines = [
   machine1516,
   machine618,
   machine725,
+  machine6003,
 ];
 
 export const machinesById = {
@@ -24,4 +26,5 @@ export const machinesById = {
   "1516": machine1516,
   "618": machine618,
   "725": machine725,
+  "6003": machine6003,
 };
