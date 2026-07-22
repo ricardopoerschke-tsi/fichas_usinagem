@@ -36,6 +36,8 @@ type Dimensoes6003 = {
   validas: boolean;
 };
 
+type MedidasCantoneira6003 = [number, number, number, number];
+
 const DIMENSOES_INVALIDAS_6003: Dimensoes6003 = {
   comprimento: 0,
   largura: 0,
@@ -94,6 +96,49 @@ function temProcessoExterno6003(peca: Peca): boolean {
   );
 }
 
+function extrairMedidasCantoneira6003(
+  dimensoes?: string
+): MedidasCantoneira6003 | null {
+  const correspondencia = dimensoes
+    ?.replace(/,/g, ".")
+    .match(
+      /(?:^|[^x\s\d.,-]\s*)(-?\d+(?:\.\d+)?)\s*x\s*(-?\d+(?:\.\d+)?)\s*x\s*(-?\d+(?:\.\d+)?)\s*x\s*(-?\d+(?:\.\d+)?)(?!\s*x\s*-?\d)/i
+    );
+
+  if (!correspondencia) {
+    return null;
+  }
+
+  const medidas: MedidasCantoneira6003 = [
+    Number(correspondencia[1]),
+    Number(correspondencia[2]),
+    Number(correspondencia[3]),
+    Number(correspondencia[4]),
+  ];
+
+  return medidas.every((medida) => Number.isFinite(medida) && medida > 0)
+    ? medidas
+    : null;
+}
+
+function ehCantoneira(dimensoes?: string): boolean {
+  return extrairMedidasCantoneira6003(dimensoes) !== null;
+}
+
+function ehConjuntoSoldado(dimensoes?: string): boolean {
+  const dimensoesNormalizadas = normalizarTexto(dimensoes)
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return (
+    dimensoesNormalizadas === "soldado" ||
+    /(?:^|\s)(?:conjunto|conj|c)\s+soldado(?:\s|$)/.test(
+      dimensoesNormalizadas
+    )
+  );
+}
+
 function chaveOrdem6003(peca: Peca, indiceOriginal: number): string {
   const ordem = String(peca.ordem ?? "").trim();
   const ordemNormalizada = normalizarTexto(ordem);
@@ -117,12 +162,51 @@ function compararTexto6003(a?: string, b?: string): number {
   });
 }
 
-function compararItens6003(a: Item6003, b: Item6003): number {
-  const processoA = temProcessoExterno6003(a.peca) ? 0 : 1;
-  const processoB = temProcessoExterno6003(b.peca) ? 0 : 1;
+function compararItens6003(
+  a: Item6003,
+  b: Item6003,
+  cantoneirasComProcessoExterno: boolean
+): number {
+  const conjuntoSoldadoA = ehConjuntoSoldado(a.peca.dimensoes);
+  const conjuntoSoldadoB = ehConjuntoSoldado(b.peca.dimensoes);
+  const medidasCantoneiraA = extrairMedidasCantoneira6003(a.peca.dimensoes);
+  const medidasCantoneiraB = extrairMedidasCantoneira6003(b.peca.dimensoes);
+  const processoExternoA = temProcessoExterno6003(a.peca);
+  const processoExternoB = temProcessoExterno6003(b.peca);
 
-  if (processoA !== processoB) {
-    return processoA - processoB;
+  const prioridadeA = conjuntoSoldadoA
+    ? 3
+    : medidasCantoneiraA
+      ? cantoneirasComProcessoExterno
+        ? 1
+        : 2
+      : processoExternoA
+        ? 0
+        : cantoneirasComProcessoExterno
+          ? 2
+          : 1;
+  const prioridadeB = conjuntoSoldadoB
+    ? 3
+    : medidasCantoneiraB
+      ? cantoneirasComProcessoExterno
+        ? 1
+        : 2
+      : processoExternoB
+        ? 0
+        : cantoneirasComProcessoExterno
+          ? 2
+          : 1;
+
+  if (prioridadeA !== prioridadeB) {
+    return prioridadeA - prioridadeB;
+  }
+
+  if (medidasCantoneiraA && medidasCantoneiraB) {
+    for (let indice = 0; indice < medidasCantoneiraA.length; indice += 1) {
+      if (medidasCantoneiraA[indice] !== medidasCantoneiraB[indice]) {
+        return medidasCantoneiraB[indice] - medidasCantoneiraA[indice];
+      }
+    }
   }
 
   const dimensoesA = extrairDimensoes6003(a.peca.dimensoes);
@@ -203,7 +287,16 @@ export function sequenciar6003(pecas: Peca[]): Peca[] {
 
       return a.indiceOriginal - b.indiceOriginal;
     })
-    .flatMap((grupo) =>
-      [...grupo.itens].sort(compararItens6003).map(({ peca }) => peca)
-    );
+    .flatMap((grupo) => {
+      const cantoneirasComProcessoExterno = grupo.itens.some(
+        ({ peca }) =>
+          ehCantoneira(peca.dimensoes) && temProcessoExterno6003(peca)
+      );
+
+      return [...grupo.itens]
+        .sort((a, b) =>
+          compararItens6003(a, b, cantoneirasComProcessoExterno)
+        )
+        .map(({ peca }) => peca);
+    });
 }
