@@ -24,6 +24,9 @@ const PROCESSOS_EXTERNOS_1572 = [
   "oxidacao",
   "revestimento",
   "tratamento",
+  "cementar",
+  "poliuretano",
+  "oxidar",
 ];
 
 function extrairNumeros(dimensoes?: string) {
@@ -375,6 +378,21 @@ export function sequenciar1572(
        * à mesma Ordem.
        */
 
+      /*
+       * Separa primeiro todas as peças com
+       * processo externo. Os demais critérios
+       * de setup só são aplicados dentro de
+       * cada um desses dois blocos.
+       */
+      const processoA =
+        prioridadeProcessoExterno1572(a);
+
+      const processoB =
+        prioridadeProcessoExterno1572(b);
+
+      if (processoA !== processoB) {
+        return processoA - processoB;
+      }
       const urgenciaPecaA =
         prioridadeUrgenciaPeca1572(a);
 
@@ -412,8 +430,6 @@ export function sequenciar1572(
 
       /*
        * Depois agrupa pela ferramenta.
-       * Processo externo não provoca
-       * troca de ferramenta.
        */
       if (
         a.ferramentaSequenciamento !==
@@ -424,22 +440,6 @@ export function sequenciar1572(
           b.ferramentaSequenciamento
         );
       }
-
-      /*
-       * Dentro do mesmo grupo de fixação
-       * e ferramenta, antecipa as peças
-       * que seguem para processos externos.
-       */
-      const processoA =
-        prioridadeProcessoExterno1572(a);
-
-      const processoB =
-        prioridadeProcessoExterno1572(b);
-
-      if (processoA !== processoB) {
-        return processoA - processoB;
-      }
-
       const medidasA = getMedidas(a);
       const medidasB = getMedidas(b);
 
