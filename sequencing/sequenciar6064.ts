@@ -36,10 +36,11 @@ export function sequenciar6064(
     return ordem;
   };
 
-  const temOperacaoPosterior = (peca: Peca): boolean => {
+  const temOperacaoExterna = (peca: Peca): boolean => {
     const observacoes = normalizarTexto(peca.observacoes ?? "");
 
-    const processosPosteriores = [
+    const processosExternos = [
+      "anodizacao",
       "solda",
       "tempera",
       "oxidacao",
@@ -49,7 +50,7 @@ export function sequenciar6064(
       "zincagem",
     ];
 
-    return processosPosteriores.some((processo) =>
+    return processosExternos.some((processo) =>
       observacoes.includes(processo)
     );
   };
@@ -160,15 +161,6 @@ export function sequenciar6064(
         if (setupA === setupAtual && setupB !== setupAtual) return -1;
         if (setupA !== setupAtual && setupB === setupAtual) return 1;
 
-        /*
-         * Quando as peças pertencem ao mesmo bloco de setup,
-         * prioriza as que seguem para outra operação.
-         */
-        const operacaoPosteriorA = temOperacaoPosterior(pecaA);
-        const operacaoPosteriorB = temOperacaoPosterior(pecaB);
-
-        if (operacaoPosteriorA && !operacaoPosteriorB) return -1;
-        if (!operacaoPosteriorA && operacaoPosteriorB) return 1;
 
         const prazoA = converterData(pecaA.prazo);
         const prazoB = converterData(pecaB.prazo);
@@ -176,6 +168,16 @@ export function sequenciar6064(
         if (prazoA !== prazoB) {
           return prazoA - prazoB;
         }
+
+        /*
+         * Depois dos critérios atuais da Ordem e antes da largura,
+         * prioriza as peças que possuem processo externo.
+         */
+        const operacaoExternaA = temOperacaoExterna(pecaA);
+        const operacaoExternaB = temOperacaoExterna(pecaB);
+
+        if (operacaoExternaA && !operacaoExternaB) return -1;
+        if (!operacaoExternaA && operacaoExternaB) return 1;
 
         /*
          * Mantém o critério atual de largura:
