@@ -5,7 +5,9 @@ export const machine6003: Machine = {
   numero: "6003",
   nome: "Womat 2",
   tipo: "Fresadora CNC",
-  material: "A\u00e7o",
+  material: "Aço",
+
+  ordem: 11,
 
   sheetName: "6003",
   historySheetName: "Historico_6003",

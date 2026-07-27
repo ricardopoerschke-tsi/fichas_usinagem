@@ -3,10 +3,11 @@ import type { Machine } from "@/types/machine";
 export const machine1572: Machine = {
   id: "1572",
   numero: "1572",
-  nome: "Fresadora Convencional",
+  nome: "Fresadora Russa",
   tipo: "Fresadora Convencional",
   material: "Aço",
 
+  ordem: 30,
   sheetName: "1572",
   historySheetName: "Historico_1572",
 

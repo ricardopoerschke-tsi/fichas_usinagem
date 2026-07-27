@@ -7,6 +7,8 @@ export const machine6064: Machine = {
   tipo: "Fresadora CNC",
   material: "Alumínio",
 
+  ordem: 10,
+
   sheetName: "6064",
   historySheetName: "Historico_6064",
 

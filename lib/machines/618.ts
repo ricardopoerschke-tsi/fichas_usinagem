@@ -3,10 +3,11 @@ import type { Machine } from "@/types/machine";
 export const machine618: Machine = {
   id: "618",
   numero: "618",
-  nome: "Mandriladora Convencional",
+  nome: "Mandriladora Ayce",
   tipo: "Mandriladora Convencional",
   material: "Aço",
 
+  ordem: 41,
   sheetName: "618",
   historySheetName: "Historico_618",
 

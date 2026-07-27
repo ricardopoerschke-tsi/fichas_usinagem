@@ -58,8 +58,6 @@ type Tema = "dark" | "light";
 type LinhaApi = Partial<Peca> &
   Record<string, string | number | boolean | null | undefined>;
 
-const ordemVisualMaquinas = ["6064", "1572", "5759", "725", "5825", "1516", "618", "6003"];
-
 export default function Sequenciador6064() {
   const [pagina, setPagina] = useState<Pagina>("home");
   const [setupAtual, setSetupAtual] = useState<Setup>("morsa");
@@ -204,10 +202,7 @@ export default function Sequenciador6064() {
     fila: sequencia.length,
   };
 
-  const maquinasHome = [...machines].sort(
-    (a, b) =>
-      ordemVisualMaquinas.indexOf(a.id) - ordemVisualMaquinas.indexOf(b.id)
-  );
+  const maquinasHome = machines;
   const totalFila = machines.reduce(
     (total, machine) => total + (filasPorMaquina[machine.id] ?? 0),
     0

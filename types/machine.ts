@@ -6,6 +6,8 @@ export type Machine = {
   tipo: string;
   material: string;
 
+  ordem: number;
+
   sheetName: string;
   historySheetName: string;
 
