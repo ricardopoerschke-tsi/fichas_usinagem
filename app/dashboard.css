@@ -264,13 +264,6 @@
   outline: none;
 }
 
-.machine-card-motion:first-child .machine-card {
-  border-color: var(--machine-accent);
-  box-shadow:
-    0 24px 50px rgba(0, 0, 0, 0.22),
-    0 0 0 1px rgba(var(--machine-accent-rgb), 0.12);
-}
-
 .machine-card__glow {
   position: absolute;
   z-index: -1;
@@ -848,13 +841,6 @@ html[data-theme="light"] .machine-card:focus-visible {
   box-shadow:
     0 16px 34px rgba(26, 54, 89, 0.11),
     0 0 0 1px rgba(var(--machine-accent-rgb), 0.12);
-}
-
-html[data-theme="light"] .machine-card-motion:first-child .machine-card {
-  border-color: var(--machine-accent);
-  box-shadow:
-    0 14px 30px rgba(26, 54, 89, 0.09),
-    0 0 0 1px rgba(var(--machine-accent-rgb), 0.09);
 }
 
 html[data-theme="light"] .machine-card__glow {
