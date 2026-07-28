@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import Image from "next/image";
 import type { Peca } from "@/types/peca";
 import { machine6064 } from "@/lib/machines/6064";
@@ -55,6 +56,7 @@ type Pagina =
   | "historico";
 type Setup = "morsa" | "vacuo";
 type Tema = "dark" | "light";
+type ModoImpressao = "completa" | "congeladas";
 type LinhaApi = Partial<Peca> &
   Record<string, string | number | boolean | null | undefined>;
 
@@ -69,6 +71,8 @@ export default function Sequenciador6064() {
   const [filasPorMaquina, setFilasPorMaquina] = useState<Record<string, number>>({});
   const [pecasPorMaquina, setPecasPorMaquina] = useState<Record<string, Peca[]>>({});
   const [tema, setTema] = useState<Tema>("dark");
+  const [modoImpressao, setModoImpressao] =
+    useState<ModoImpressao>("completa");
   const [congelamento, setCongelamento] =
     useState<CongelamentoSequencia | null>(null);
   const [referenciaParaCongelar, setReferenciaParaCongelar] = useState("");
@@ -395,7 +399,16 @@ export default function Sequenciador6064() {
     setDragIndex(null);
   }
 
-  function imprimirSequencia() {
+  function imprimirSequencia(modo: ModoImpressao = "completa") {
+    flushSync(() => {
+      setModoImpressao(modo);
+    });
+
+    window.addEventListener(
+      "afterprint",
+      () => setModoImpressao("completa"),
+      { once: true }
+    );
     window.print();
   }
 
@@ -712,6 +725,15 @@ export default function Sequenciador6064() {
     );
     const referenciaCongeladaEncontrada =
       !congelamento || limiteCongelado >= 0;
+    const podeImprimirCongeladas =
+      Boolean(congelamento) && referenciaCongeladaEncontrada;
+    const itensImpressao = sequencia
+      .map((peca, index) => ({ peca, index }))
+      .filter(({ index }) =>
+        modoImpressao === "congeladas"
+          ? podeImprimirCongeladas && index <= limiteCongelado
+          : true
+      );
     const contagemReferencias = sequencia.reduce<Record<string, number>>(
       (acc, peca) => {
         const chave = obterChavePeca(peca);
@@ -801,11 +823,21 @@ export default function Sequenciador6064() {
                 <div className="sequence-header__actions">
                   <button
                     type="button"
-                    onClick={imprimirSequencia}
+                    onClick={() => imprimirSequencia("completa")}
                     className="flow-button is-secondary"
                   >
                     <Printer size={18} />
-                    Imprimir sequência
+                    Imprimir sequência completa
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => imprimirSequencia("congeladas")}
+                    disabled={!podeImprimirCongeladas}
+                    className="flow-button is-secondary"
+                  >
+                    <Printer size={18} />
+                    Imprimir somente peças congeladas
                   </button>
 
                   <button
@@ -941,7 +973,7 @@ export default function Sequenciador6064() {
           <div className="print-header hidden">
             <h1>Sequência {maquina.numero} - {maquina.nome}</h1>
             <p>Setup considerado: {setupAtual === "morsa" ? "Morsa" : "Mesa de vácuo"}</p>
-            <p>Peças pendentes: {sequencia.length}</p>
+            <p>Peças pendentes: {itensImpressao.length}</p>
             <p>Data de impressão: {formatarDataHoje()}</p>
           </div>
 
@@ -958,7 +990,7 @@ export default function Sequenciador6064() {
               <span>Qtd</span>
             </div>
 
-            {sequencia.map((peca, index) => (
+            {itensImpressao.map(({ peca, index }) => (
               <div key={`print-${peca.desenho}-${index}`} className="print-row">
                 <span>☐</span>
                 <span>{String(index + 1).padStart(2, "0")}</span>
