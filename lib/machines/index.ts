@@ -9,6 +9,7 @@ import { machine6003 } from "./6003";
 import { machine904 } from "./904";
 import { machine641 } from "./641";
 import { machine646 } from "./646";
+import { machine10708 } from "./10708";
 
 const machineList = [
   machine6064,
@@ -22,6 +23,7 @@ const machineList = [
   machine904,
   machine641,
   machine646,
+  machine10708,
 ];
 
 export const machines = [...machineList].sort(
@@ -40,4 +42,5 @@ export const machinesById = {
   "904": machine904,
   "641": machine641,
   "646": machine646,
+  "10708": machine10708,
 };

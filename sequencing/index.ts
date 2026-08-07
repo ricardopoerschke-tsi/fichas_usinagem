@@ -9,6 +9,7 @@ import { sequenciar6003 } from "./sequenciar6003";
 import { sequenciar904 } from "./sequenciar904";
 import { sequenciar641 } from "./sequenciar641";
 import { sequenciar646 } from "./sequenciar646";
+import { sequenciar10708 } from "./sequenciar10708";
 
 export const sequencingStrategies = {
   "6064": sequenciar6064,
@@ -22,4 +23,5 @@ export const sequencingStrategies = {
   "904": sequenciar904,
   "641": sequenciar641,
   "646": sequenciar646,
+  "10708": sequenciar10708,
 };
